@@ -488,6 +488,34 @@ class KeplerMapper(object):
     h2 { text-shadow: 0px 1px #000,0px -1px #000; font: 700 16px Roboto, Sans-serif;}
     .meta {  position: absolute; opacity: 0.9; width: 220px; top: 80px; left: 20px; display: block; %s background: #000; line-height: 25px; color: #fafafa; border: 20px solid #000; font: 100 16px Roboto, Sans-serif;}
     div.tooltip { position: absolute; width: 380px; display: block; %s padding: 20px; background: #000; border: 0px; border-radius: 3px; pointer-events: none; z-index: 999; color: #FAFAFA;}
+    .lasso path {
+      stroke: rgb(80,80,80);
+      stroke-width:2px;
+    }
+
+    .lasso .drawn {
+      fill-opacity:.05 ;
+    }
+
+    .lasso .loop_close {
+      fill:none;
+      stroke-dasharray: 4,4;
+    }
+
+    .lasso .origin {
+      fill:#3399FF;
+      fill-opacity:.5;
+    }
+
+    .not_possible {
+      background:rgb(200,200,200);
+      fill:rgb(200,200,200);
+    }
+
+    .possible {
+      background:#EC888C;
+      fill:#EC888C;
+    }
     }
     </style>
     <body>
@@ -503,6 +531,8 @@ class KeplerMapper(object):
       </p>
     </div>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.5/d3.min.js"></script>
+    //<script src="http://axc.net/code_libraries/lasso/lasso.min.js"></script>
+    <script src="/Users/smangham/libraries/D3-Lasso-Plugin/lasso.js"></script>
     <script>
     var width = %s,
       height = %s;
@@ -523,36 +553,42 @@ class KeplerMapper(object):
     var divs = d3.select('#holder').append('div')
       .attr('class', 'divs')
       .attr('style', function(d) { return 'overflow: hidden; width: ' + width + 'px; height: ' + height + 'px;'; });
-      graph = %s;
-      force
-        .nodes(graph.nodes)
-        .links(graph.links)
-        .start();
-      var link = svg.selectAll(".link")
-        .data(graph.links)
-        .enter().append("line")
-        .attr("class", "link")
-        .style("stroke-width", function(d) { return Math.sqrt(d.value); });
-      var node = divs.selectAll('div')
+    graph = %s;
+    force
+      .nodes(graph.nodes)
+      .links(graph.links)
+      .start();
+    var link = svg.selectAll(".link")
+      .data(graph.links)
+      .enter().append("line")
+      .attr("class", "link")
+      .style("stroke-width", function(d) { return Math.sqrt(d.value); });
+    var node = divs.selectAll('div')
+    //var node = svg.selectAll(".node")
       .data(graph.nodes)
-        .enter().append('div')
-        .on("mouseover", function(d) {
-          div.transition()
-            .duration(200)
-            .style("opacity", .9);
-          div .html(d.tooltip + "<br/>")
-            .style("left", (d3.event.pageX + 100) + "px")
-            .style("top", (d3.event.pageY - 28) + "px");
-          })
-        .on("mouseout", function(d) {
-          div.transition()
-            .duration(500)
-            .style("opacity", 0);
+      .enter().append('div')
+      .attr("class", "node")
+      .on("mouseover", function(d) {
+        div.transition()
+          .duration(200)
+          .style("opacity", .9);
+        div.html(d.tooltip + "<br/>")
+          .style("left", (d3.event.pageX + 100) + "px")
+          .style("top", (d3.event.pageY - 28) + "px");
+        })
+      .on("mouseout", function(d) {
+        div.transition()
+          .duration(500)
+          .style("opacity", 0);
         })
         .call(force.drag);
-      node.append("title")
-        .text(function(d) { return d.name; });
-      force.on("tick", function() {
+    // Append to the node data the 'title' property
+    node.append("title")
+      .text(function(d) { return d.name; });
+
+    // During tick-based restoration,
+    // Assign the following attributes to nodes and links?
+    force.on("tick", function() {
       link.attr("x1", function(d) { return d.source.x; })
         .attr("y1", function(d) { return d.source.y; })
         .attr("x2", function(d) { return d.target.x; })
@@ -562,6 +598,70 @@ class KeplerMapper(object):
         .attr('style', function(d) { return 'width: ' + (d.group * 2) + 'px; height: ' + (d.group * 2) + 'px; ' + 'left: '+(d.x-(d.group))+'px; ' + 'top: '+(d.y-(d.group))+'px; background: '+color(d.color)+'; box-shadow: 0px 0px 3px #111; box-shadow: 0px 0px 33px '+color(d.color)+', inset 0px 0px 5px rgba(0, 0, 0, 0.2);'})
         ;
       });
+
+    // Lasso functions to execute while lassoing
+    var lasso_start = function() {
+      lasso.items()
+        .attr("r",3.5) // reset size
+        .style("fill",null) // clear all of the fills
+        .classed({"not_possible":true,"selected":false}); // style as not possible
+    };
+
+    var lasso_draw = function() {
+      // Style the possible dots
+      lasso.items().filter(function(d) {return d.possible===true})
+        .classed({"not_possible":false,"possible":true});
+
+      // Style the not possible dot
+      lasso.items().filter(function(d) {return d.possible===false})
+        .classed({"not_possible":true,"possible":false});
+    };
+
+    var lasso_end = function() {
+      // Reset the color of all dots
+      lasso.items()
+         .style("fill", function(d) { return color(d.species); });
+
+      // Style the selected dots
+      lasso.items().filter(function(d) {return d.selected===true})
+        .classed({"not_possible":false,"possible":false})
+        .attr("r",7);
+
+      // Reset the style of the not selected dots
+      lasso.items().filter(function(d) {return d.selected===false})
+        .classed({"not_possible":false,"possible":false})
+        .attr("r",3.5);
+
+    };
+
+    // Define the lasso
+    var lasso = d3.lasso()
+          .closePathDistance(75) // max distance for the lasso loop to be closed
+          .closePathSelect(true) // can items be selected by closing the path?
+          .hoverSelect(true) // can items by selected by hovering over them?
+          .area(divs) // area where the lasso can be started
+          .on("start",lasso_start) // lasso start function
+          .on("draw",lasso_draw) // lasso draw function
+          .on("end",lasso_end); // lasso end function
+
+    // Init the lasso on the svg:g that contains the dots
+    //svg.call(lasso);
+
+    console.log("Counting all nodes (data)...");
+    node.each( function(d, i){
+      console.log( d.x );
+    });
+    console.log("Counting all nodes (DOM)...");
+    d3.selectAll(".node").each( function(d, i){
+        console.log( d3.select(this).attr("cx") );
+    });
+    console.log("Counting all links (DOM)...");
+    d3.selectAll(".link").each( function(d, i){
+        console.log( d3.select(this).attr("x1") );
+    });
+
+    //lasso.items(svg.selectAll(".node"))
+
     </script>""" % (title, width_css, height_css, title_display, meta_display, tooltips_display, title, meta_data["projection"], meta_data['nr_cubes'], overlap_perc, color_function, meta_data["projection"], meta_data["clusterer"], meta_data["scaler"], width_js, height_js, graph_charge, graph_link_distance, graph_gravity, json.dumps(json_s))
 
         if save_file:
