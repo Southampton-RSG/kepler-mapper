@@ -503,19 +503,13 @@ class KeplerMapper(object):
     }
 
     .lasso .origin {
-      fill:#3399FF;
+      fill:#909090;
       fill-opacity:.5;
     }
 
-    .not_possible {
-      background:rgb(200,200,200);
-      fill:rgb(200,200,200);
-    }
-
-    .possible {
-      background:#EC888C;
-      fill:#EC888C;
-    }
+    .not_possible { fill-opacity:.3; }
+    .possible { fill-opacity:.75; }
+    .excluded { fill-opacity:.2; }
     }
     </style>
     <body>
@@ -531,14 +525,19 @@ class KeplerMapper(object):
       </p>
     </div>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.5/d3.min.js"></script>
-    //<script src="http://axc.net/code_libraries/lasso/lasso.min.js"></script>
-    <script src="/Users/smangham/libraries/D3-Lasso-Plugin/lasso.js"></script>
+    <script src="http://axc.net/code_libraries/lasso/lasso.min.js"></script>
+    //<script src="/Users/smangham/libraries/D3-Lasso-Plugin/lasso.js"></script>
     <script>
     var width = %s,
       height = %s;
     var color = d3.scale.ordinal()
       .domain(["0","1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13","14","15","16","17","18","19","20","21","22","23","24","25","26","27","28","29","30"])
       .range(["#FF0000","#FF1400","#FF2800","#FF3c00","#FF5000","#FF6400","#FF7800","#FF8c00","#FFa000","#FFb400","#FFc800","#FFdc00","#FFf000","#fdff00","#b0ff00","#65ff00","#17ff00","#00ff36","#00ff83","#00ffd0","#00e4ff","#00c4ff","#00a4ff","#00a4ff","#0084ff","#0064ff","#0044ff","#0022ff","#0002ff","#0100ff","#0300ff","#0500ff"]);
+
+    var divs = d3.select('#holder').append('div')
+        .attr('class', 'divs')
+       .attr('style', function(d) { return 'overflow: hidden; width: ' + width + 'px; height: ' + height + 'px;'; });
+
     var force = d3.layout.force()
       .charge(%s)
       .linkDistance(%s)
@@ -550,9 +549,22 @@ class KeplerMapper(object):
     var div = d3.select("#holder").append("div")
       .attr("class", "tooltip")
       .style("opacity", 0.0);
-    var divs = d3.select('#holder').append('div')
-      .attr('class', 'divs')
-      .attr('style', function(d) { return 'overflow: hidden; width: ' + width + 'px; height: ' + height + 'px;'; });
+    //https://www.visualcinnamon.com/2016/06/glow-filter-d3-visualization.html
+    //Container for the gradients
+    var defs = svg.append("defs");
+
+    //Filter for the outside glow
+    var filter = defs.append("filter")
+    	.attr("id","glow");
+    filter.append("feGaussianBlur")
+    	.attr("stdDeviation","4")
+    	.attr("result","coloredBlur");
+    var feMerge = filter.append("feMerge");
+    feMerge.append("feMergeNode")
+    	.attr("in","coloredBlur");
+    feMerge.append("feMergeNode")
+    	.attr("in","SourceGraphic");
+
     graph = %s;
     force
       .nodes(graph.nodes)
@@ -563,10 +575,9 @@ class KeplerMapper(object):
       .enter().append("line")
       .attr("class", "link")
       .style("stroke-width", function(d) { return Math.sqrt(d.value); });
-    var node = divs.selectAll('div')
-    //var node = svg.selectAll(".node")
+    var node = svg.selectAll(".node")
       .data(graph.nodes)
-      .enter().append('div')
+      .enter().append('circle')
       .attr("class", "node")
       .on("mouseover", function(d) {
         div.transition()
@@ -586,8 +597,7 @@ class KeplerMapper(object):
     node.append("title")
       .text(function(d) { return d.name; });
 
-    // During tick-based restoration,
-    // Assign the following attributes to nodes and links?
+    // Update the attributes of the SVG elements each tick
     force.on("tick", function() {
       link.attr("x1", function(d) { return d.source.x; })
         .attr("y1", function(d) { return d.source.y; })
@@ -595,72 +605,63 @@ class KeplerMapper(object):
         .attr("y2", function(d) { return d.target.y; });
       node.attr("cx", function(d) { return d.x; })
         .attr("cy", function(d) { return d.y; })
-        .attr('style', function(d) { return 'width: ' + (d.group * 2) + 'px; height: ' + (d.group * 2) + 'px; ' + 'left: '+(d.x-(d.group))+'px; ' + 'top: '+(d.y-(d.group))+'px; background: '+color(d.color)+'; box-shadow: 0px 0px 3px #111; box-shadow: 0px 0px 33px '+color(d.color)+', inset 0px 0px 5px rgba(0, 0, 0, 0.2);'})
-        ;
+        .attr("r", function(d) { return d.group; })
+        .style("filter", "url(#glow)")
+        .style("fill", function(d) { return color(d.color); });
+        //.attr('style', function(d) { return 'box-shadow: 0px 0px 3px #111; box-shadow: 0px 0px 33px '+color(d.color)+', inset 0px 0px 5px rgba(0, 0, 0, 0.2);'})
       });
 
     // Lasso functions to execute while lassoing
     var lasso_start = function() {
       lasso.items()
-        .attr("r",3.5) // reset size
-        .style("fill",null) // clear all of the fills
-        .classed({"not_possible":true,"selected":false}); // style as not possible
+        .classed({"not_possible":true, "selected":false, "excluded":false}); // style as not possible
     };
 
     var lasso_draw = function() {
       // Style the possible dots
       lasso.items().filter(function(d) {return d.possible===true})
-        .classed({"not_possible":false,"possible":true});
+        .classed({"not_possible":false, "possible":true});
 
       // Style the not possible dot
       lasso.items().filter(function(d) {return d.possible===false})
-        .classed({"not_possible":true,"possible":false});
+        .classed({"not_possible":true, "possible":false});
     };
 
     var lasso_end = function() {
       // Reset the color of all dots
       lasso.items()
-         .style("fill", function(d) { return color(d.species); });
+         .style("fill", function(d) {return color(d.color)});
 
-      // Style the selected dots
-      lasso.items().filter(function(d) {return d.selected===true})
-        .classed({"not_possible":false,"possible":false})
-        .attr("r",7);
+      // If the selection is nonzero
+      if(!lasso.items().filter(function(d) {return d.selected===true}).empty())
+      {
+        // Style the selected dots
+        lasso.items().filter(function(d) {return d.selected===true})
+          .classed({"not_possible":false,"possible":false, "excluded":false});
 
-      // Reset the style of the not selected dots
-      lasso.items().filter(function(d) {return d.selected===false})
-        .classed({"not_possible":false,"possible":false})
-        .attr("r",3.5);
+        // Reset the style of the not selected dots
+        lasso.items().filter(function(d) {return d.selected===false})
+          .classed({"not_possible":false, "possible":false, "excluded":true});
 
+      } else {
+        // Reset everyone's style
+        lasso.items().classed({"not_possible":false,"possible":false, "excluded":false});
+      }
     };
 
     // Define the lasso
     var lasso = d3.lasso()
-          .closePathDistance(75) // max distance for the lasso loop to be closed
+          .closePathDistance(999) // max distance for the lasso loop to be closed
           .closePathSelect(true) // can items be selected by closing the path?
-          .hoverSelect(true) // can items by selected by hovering over them?
+          .hoverSelect(false) // can items by selected by hovering over them?
           .area(divs) // area where the lasso can be started
           .on("start",lasso_start) // lasso start function
           .on("draw",lasso_draw) // lasso draw function
           .on("end",lasso_end); // lasso end function
 
     // Init the lasso on the svg:g that contains the dots
-    //svg.call(lasso);
-
-    console.log("Counting all nodes (data)...");
-    node.each( function(d, i){
-      console.log( d.x );
-    });
-    console.log("Counting all nodes (DOM)...");
-    d3.selectAll(".node").each( function(d, i){
-        console.log( d3.select(this).attr("cx") );
-    });
-    console.log("Counting all links (DOM)...");
-    d3.selectAll(".link").each( function(d, i){
-        console.log( d3.select(this).attr("x1") );
-    });
-
-    //lasso.items(svg.selectAll(".node"))
+    lasso.items(svg.selectAll(".node"))
+    svg.call(lasso);
 
     </script>""" % (title, width_css, height_css, title_display, meta_display, tooltips_display, title, meta_data["projection"], meta_data['nr_cubes'], overlap_perc, color_function, meta_data["projection"], meta_data["clusterer"], meta_data["scaler"], width_js, height_js, graph_charge, graph_link_distance, graph_gravity, json.dumps(json_s))
 
