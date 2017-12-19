@@ -534,25 +534,45 @@ class KeplerMapper(object):
       .domain(["0","1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13","14","15","16","17","18","19","20","21","22","23","24","25","26","27","28","29","30"])
       .range(["#FF0000","#FF1400","#FF2800","#FF3c00","#FF5000","#FF6400","#FF7800","#FF8c00","#FFa000","#FFb400","#FFc800","#FFdc00","#FFf000","#fdff00","#b0ff00","#65ff00","#17ff00","#00ff36","#00ff83","#00ffd0","#00e4ff","#00c4ff","#00a4ff","#00a4ff","#0084ff","#0064ff","#0044ff","#0022ff","#0002ff","#0100ff","#0300ff","#0500ff"]);
 
-    var divs = d3.select('#holder').append('div')
-        .attr('class', 'divs')
-       .attr('style', function(d) { return 'overflow: hidden; width: ' + width + 'px; height: ' + height + 'px;'; });
+    // Rewritten SVG using this as a template:
+    // https://gist.github.com/vladimir-ivanov/df45ef30db82da69d7db
+    var vis = d3.select('#holder').append("svg:svg")
+      .attr("width", width)
+      .attr("height", height)
+      .attr("pointer-events", "all")
+      .append("svg:g");
+    vis.append('svg:rect')
+      .append("width", width)
+      .append("height", height);
+
+    var lasso_area = vis.append('rect')
+      .attr('width', width)
+      .attr('height', height)
+      .style('opacity', 0.0);
 
     var force = d3.layout.force()
       .charge(%s)
       .linkDistance(%s)
       .gravity(%s)
       .size([width, height]);
-    var svg = d3.select("#holder").append("svg")
-      .attr("width", width)
-      .attr("height", height);
+
+    // Define the lasso
+    var lasso = d3.lasso()
+          .closePathDistance(999) // max distance for the lasso loop to be closed
+          .closePathSelect(true) // can items be selected by closing the path?
+          .hoverSelect(false) // can items by selected by hovering over them?
+          .area(lasso_area) // area where the lasso can be started
+          .on("start",lasso_start) // lasso start function
+          .on("draw",lasso_draw) // lasso draw function
+          .on("end",lasso_end); // lasso end function
+
     var div = d3.select("#holder").append("div")
       .attr("class", "tooltip")
       .style("opacity", 0.0);
+
     //https://www.visualcinnamon.com/2016/06/glow-filter-d3-visualization.html
     //Container for the gradients
-    var defs = svg.append("defs");
-
+    var defs = vis.append("defs");
     //Filter for the outside glow
     var filter = defs.append("filter")
     	.attr("id","glow");
@@ -570,12 +590,12 @@ class KeplerMapper(object):
       .nodes(graph.nodes)
       .links(graph.links)
       .start();
-    var link = svg.selectAll(".link")
+    var link = vis.selectAll(".link")
       .data(graph.links)
       .enter().append("line")
       .attr("class", "link")
       .style("stroke-width", function(d) { return Math.sqrt(d.value); });
-    var node = svg.selectAll(".node")
+    var node = vis.selectAll(".node")
       .data(graph.nodes)
       .enter().append('circle')
       .attr("class", "node")
@@ -649,19 +669,10 @@ class KeplerMapper(object):
       }
     };
 
-    // Define the lasso
-    var lasso = d3.lasso()
-          .closePathDistance(999) // max distance for the lasso loop to be closed
-          .closePathSelect(true) // can items be selected by closing the path?
-          .hoverSelect(false) // can items by selected by hovering over them?
-          .area(divs) // area where the lasso can be started
-          .on("start",lasso_start) // lasso start function
-          .on("draw",lasso_draw) // lasso draw function
-          .on("end",lasso_end); // lasso end function
 
     // Init the lasso on the svg:g that contains the dots
-    lasso.items(svg.selectAll(".node"))
-    svg.call(lasso);
+    lasso.items(d3.selectAll(".node"))
+    vis.call(lasso);
 
     </script>""" % (title, width_css, height_css, title_display, meta_display, tooltips_display, title, meta_data["projection"], meta_data['nr_cubes'], overlap_perc, color_function, meta_data["projection"], meta_data["clusterer"], meta_data["scaler"], width_js, height_js, graph_charge, graph_link_distance, graph_gravity, json.dumps(json_s))
 
