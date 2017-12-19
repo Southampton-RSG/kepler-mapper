@@ -488,6 +488,12 @@ class KeplerMapper(object):
     h2 { text-shadow: 0px 1px #000,0px -1px #000; font: 700 16px Roboto, Sans-serif;}
     .meta {  position: absolute; opacity: 0.9; width: 220px; top: 80px; left: 20px; display: block; %s background: #000; line-height: 25px; color: #fafafa; border: 20px solid #000; font: 100 16px Roboto, Sans-serif;}
     div.tooltip { position: absolute; width: 380px; display: block; %s padding: 20px; background: #000; border: 0px; border-radius: 3px; pointer-events: none; z-index: 999; color: #FAFAFA;}
+
+    .class_export_button {
+      position:absolute; top:20px; right: 20px; width: 220px;
+      opacity: 0.9; display: block; background: #000; line-height: 25px; color: #fafafa; border: 20px solid #000; font: 100 16px Roboto, Sans-serif;
+    }
+
     .lasso path {
       stroke: rgb(80,80,80);
       stroke-width:2px;
@@ -512,18 +518,24 @@ class KeplerMapper(object):
     .excluded { fill-opacity:.2; }
     }
     </style>
+
     <body>
     <div id="holder">
       <h1>%s</h1>
-      <p class="meta">
-      <b>Lens</b><br>%s<br><br>
-      <b>Cubes per dimension</b><br>%s<br><br>
-      <b>Overlap percentage</b><br>%s<br><br>
-      <b>Color Function</b><br>%s( %s )<br><br>
-      <b>Clusterer</b><br>%s<br><br>
-      <b>Scaler</b><br>%s
+      <p id="export_button" class="class_export_button">
+        <b>Export Selection</b>
       </p>
+      <p class="meta">
+        <b>Lens</b><br>%s<br><br>
+        <b>Cubes per dimension</b><br>%s<br><br>
+        <b>Overlap percentage</b><br>%s<br><br>
+        <b>Color Function</b><br>%s( %s )<br><br>
+        <b>Clusterer</b><br>%s<br><br>
+        <b>Scaler</b><br>%s
+      </p>
+
     </div>
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.5/d3.min.js"></script>
     <script src="http://axc.net/code_libraries/lasso/lasso.min.js"></script>
     //<script src="/Users/smangham/libraries/D3-Lasso-Plugin/lasso.js"></script>
@@ -556,6 +568,45 @@ class KeplerMapper(object):
       .gravity(%s)
       .size([width, height]);
 
+    // Lasso functions to execute while lassoing
+    var lasso_start = function() {
+      lasso.items()
+        .classed({"not_possible":true, "selected":false, "excluded":false}); // style as not possible
+    };
+
+    var lasso_draw = function() {
+      // Style the possible dots
+      lasso.items().filter(function(d) {return d.possible===true})
+        .classed({"not_possible":false, "possible":true});
+
+      // Style the not possible dot
+      lasso.items().filter(function(d) {return d.possible===false})
+        .classed({"not_possible":true, "possible":false});
+    };
+
+    var lasso_end = function() {
+      // Reset the color of all dots
+      lasso.items()
+         .style("fill", function(d) {return color(d.color)});
+
+      // If the selection is nonzero
+      if(!lasso.items().filter(function(d) {return d.selected===true}).empty())
+      {
+        // Style the selected dots
+        lasso.items().filter(function(d) {return d.selected===true})
+          .classed({"not_possible":false,"possible":false, "excluded":false});
+
+        // Reset the style of the not selected dots
+        lasso.items().filter(function(d) {return d.selected===false})
+          .classed({"not_possible":false, "possible":false, "excluded":true});
+
+      } else {
+        // Reset everyone's style
+        lasso.items().classed({"not_possible":false,"possible":false, "excluded":false});
+      }
+    };
+
+
     // Define the lasso
     var lasso = d3.lasso()
           .closePathDistance(999) // max distance for the lasso loop to be closed
@@ -566,6 +617,7 @@ class KeplerMapper(object):
           .on("draw",lasso_draw) // lasso draw function
           .on("end",lasso_end); // lasso end function
 
+
     var div = d3.select("#holder").append("div")
       .attr("class", "tooltip")
       .style("opacity", 0.0);
@@ -575,9 +627,13 @@ class KeplerMapper(object):
     var defs = vis.append("defs");
     //Filter for the outside glow
     var filter = defs.append("filter")
-    	.attr("id","glow");
+    	.attr("id","glow")
+        .attr("x", "-250%%")
+        .attr("y", "-250%%")
+        .attr("width", "500%%")
+        .attr("height", "500%%");
     filter.append("feGaussianBlur")
-    	.attr("stdDeviation","4")
+    	.attr("stdDeviation","15")
     	.attr("result","coloredBlur");
     var feMerge = filter.append("feMerge");
     feMerge.append("feMergeNode")
@@ -630,45 +686,6 @@ class KeplerMapper(object):
         .style("fill", function(d) { return color(d.color); });
         //.attr('style', function(d) { return 'box-shadow: 0px 0px 3px #111; box-shadow: 0px 0px 33px '+color(d.color)+', inset 0px 0px 5px rgba(0, 0, 0, 0.2);'})
       });
-
-    // Lasso functions to execute while lassoing
-    var lasso_start = function() {
-      lasso.items()
-        .classed({"not_possible":true, "selected":false, "excluded":false}); // style as not possible
-    };
-
-    var lasso_draw = function() {
-      // Style the possible dots
-      lasso.items().filter(function(d) {return d.possible===true})
-        .classed({"not_possible":false, "possible":true});
-
-      // Style the not possible dot
-      lasso.items().filter(function(d) {return d.possible===false})
-        .classed({"not_possible":true, "possible":false});
-    };
-
-    var lasso_end = function() {
-      // Reset the color of all dots
-      lasso.items()
-         .style("fill", function(d) {return color(d.color)});
-
-      // If the selection is nonzero
-      if(!lasso.items().filter(function(d) {return d.selected===true}).empty())
-      {
-        // Style the selected dots
-        lasso.items().filter(function(d) {return d.selected===true})
-          .classed({"not_possible":false,"possible":false, "excluded":false});
-
-        // Reset the style of the not selected dots
-        lasso.items().filter(function(d) {return d.selected===false})
-          .classed({"not_possible":false, "possible":false, "excluded":true});
-
-      } else {
-        // Reset everyone's style
-        lasso.items().classed({"not_possible":false,"possible":false, "excluded":false});
-      }
-    };
-
 
     // Init the lasso on the svg:g that contains the dots
     lasso.items(d3.selectAll(".node"))
