@@ -8,17 +8,35 @@
     html { height: 100%;}
     body {background: #111; height: 100%; font: 100 16px Roboto, Sans-serif;}
     .link { stroke: #999; stroke-opacity: .333;  }
-    .divs div { border-radius: 50%; background: red; position: absolute; }
-    .divs { position: absolute; top: 0; left: 0; }
     #holder { position: relative; width: 100%; height: 100%; background: #111; display: block;}
-    h1 {  padding: 20px; color: #fafafa; text-shadow: 0px 1px #000,0px -1px #000; position: absolute; font: 300 30px Roboto, Sans-serif;}
+    h1 {  padding: 20px; color: #fafafa; text-shadow: 0px 1px #000,0px -1px #000; position: relative; font: 300 30px Roboto, Sans-serif;}
     h2 { text-shadow: 0px 1px #000,0px -1px #000; font: 700 16px Roboto, Sans-serif;}
-    .meta {  position: absolute; opacity: 0.9; width: 220px; top: 80px; left: 20px; display: block;  background: #000; line-height: 25px; color: #fafafa; border: 20px solid #000; font: 100 16px Roboto, Sans-serif;}
     div.tooltip { position: absolute; width: 380px; display: block;  padding: 20px; background: #000; border: 0px; border-radius: 3px; pointer-events: none; z-index: 999; color: #FAFAFA;}
 
-    .class_export_button {
-      position:absolute; top:20px; right: 20px; width: 220px;
-      opacity: 0.9; display: block; background: #000; line-height: 25px; color: #fafafa; border: 20px solid #000; font: 100 16px Roboto, Sans-serif;
+    .meta {
+      position: absolute; top: 160px; left: 20px; width: 220px;
+      opacity: 0.9;  display: block;  background: #000; line-height: 25px; color: #fafafa; border: 20px solid #000; font: 100 16px Roboto, Sans-serif;
+    }
+
+    .export_invalid {
+      position:absolute; top: 80px; left: 20px; width: 220px;
+      opacity: 0.9; display: block; background: #000; line-height: 25px; color: #fafafa; font: 100 16px Roboto, Sans-serif;
+      padding: 18px; border: 2px solid #000000;
+    }
+    .export_valid {
+      position:absolute; top: 80px; left: 20px; width: 220px;
+      opacity: 0.9; display: block; background: #000; line-height: 25px; color: #fafafa; font: 100 16px Roboto, Sans-serif;
+      padding: 18px; border: 2px solid #fafafa;
+    }
+    .export_invalid_hover {
+      position:absolute; top: 80px; left: 20px; width: 220px;
+      opacity: 0.25; display: block; background: #000; line-height: 25px; color: #fafafa; font: 100 16px Roboto, Sans-serif;
+      padding: 18px; border: 2px solid #000000;
+    }
+    .export_valid_hover {
+      position:absolute; top: 80px; left: 20px; width: 220px;
+      opacity: 1.0; display: block; background: #000; line-height: 25px; color: #fafafa; font: 100 16px Roboto, Sans-serif;
+      padding: 17px; border: 3px solid #fafafa;
     }
 
     .lasso path {
@@ -49,7 +67,7 @@
     <body>
     <div id="holder">
       <h1>My Data</h1>
-      <p id="export_button" class="class_export_button">
+      <p id="export_button" class="export_valid">
         <b>Export Selection</b>
       </p>
       <p class="meta">
@@ -96,8 +114,28 @@
       .gravity(0.1)
       .size([width, height]);
 
+    // Mouseover of the export selection button to make it clear if it's valid
+    d3.select('#export_button')
+      .on("mouseover", function(d) {
+        if(d3.select(this).classed("export_valid")) {
+          d3.select(this).attr("class", "export_valid_hover");
+        } else {
+          d3.select(this).attr("class", "export_invalid_hover");
+        }
+      })
+      .on("mouseout", function(d) {
+        if(d3.select(this).classed("export_valid_hover")) {
+          d3.select(this).attr("class", "export_valid");
+        } else {
+          d3.select(this).attr("class", "export_invalid");
+        }
+     });
+
+
     // Lasso functions to execute while lassoing
     var lasso_start = function() {
+      // Style the dots as all unselected, and disable the export button
+      d3.select('#export_button').attr("class", "export_invalid");
       lasso.items()
         .classed({"not_possible":true, "selected":false, "excluded":false}); // style as not possible
     };
@@ -120,18 +158,16 @@
       // If the selection is nonzero
       if(!lasso.items().filter(function(d) {return d.selected===true}).empty())
       {
-        // Style the selected dots
+        // Style the selected dots & nonselected dots, and enable export button
         lasso.items().filter(function(d) {return d.selected===true})
           .classed({"not_possible":false,"possible":false, "excluded":false});
-
-        // Reset the style of the not selected dots
         lasso.items().filter(function(d) {return d.selected===false})
           .classed({"not_possible":false, "possible":false, "excluded":true});
+        d3.select('#export_button').attr("class", "export_valid");
 
       } else {
         // Reset everyone's style
-        lasso.items().classed({"not_possible":false,"possible":false, "excluded":false});
-      }
+        lasso.items().classed({"not_possible":false,"possible":false, "excluded":false});      }
     };
 
 
