@@ -11,9 +11,23 @@
   <link href='https://fonts.googleapis.com/css?family=Roboto+Mono:700,300' rel='stylesheet' type='text/css'>
   <style> {{ css_text }} </style>
 
+  {# Join-the-Dots #}
+  <link href='static/styles/lasso.css' rel='stylesheet' type='text/css'>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.5/d3.min.js"></script>
+  <script src="http://axc.net/code_libraries/lasso/lasso.min.js"></script>
+  <script>
+    function addScript(filename)
+    {
+      var scriptBlock=document.createElement('script')
+      scriptBlock.setAttribute("type","text/javascript")
+      scriptBlock.setAttribute("src", filename)
+      document.getElementsByTagName("head")[0].appendChild(scriptBlock)
+    }
+  </script>
+  {# Join-the-Dots #}
 </head>
 
-<body id="display">
+<body id="display" onload="addScript('static/scripts/lasso.js')">
   <div id="header">
     <noscript><b>Requires JavaScript (d3.js) for visualizations</b></noscript>
     <h1>{{ title }}</h1>

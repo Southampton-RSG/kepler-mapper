@@ -11,6 +11,13 @@ var svg = d3.select("#canvas").append("svg")
           .attr("width", width)
           .attr("height", height);
 
+// Joint-the-Dots: We add the lasso area
+var lasso_area = svg.append('rect')
+  .attr('width', width)
+  .attr('height', height)
+  .style('opacity', 0.0);
+// Join-the-Dots
+
 var focus_node = null, highlight_node = null;
 var text_center = false;
 var outline = false;
