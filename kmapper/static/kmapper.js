@@ -11,13 +11,6 @@ var svg = d3.select("#canvas").append("svg")
           .attr("width", width)
           .attr("height", height);
 
-// Joint-the-Dots: We add the lasso area
-var lasso_area = svg.append('rect')
-  .attr('width', width)
-  .attr('height', height)
-  .style('opacity', 0.0);
-// Join-the-Dots
-
 var focus_node = null, highlight_node = null;
 var text_center = false;
 var outline = false;
@@ -68,7 +61,16 @@ var max_base_node_size = 36;
 var min_zoom = 0.1;
 var max_zoom = 7;
 var zoom = d3.behavior.zoom().scaleExtent([min_zoom,max_zoom]);
+
+
 var g = svg.append("g");
+
+// Joint-the-Dots: We add the lasso area
+var lasso_area = g.append('rect')
+  .attr('width', width)
+  .attr('height', height)
+  .style('opacity', 0.0);
+// Join-the-Dots
 
 svg.style("cursor","move");
 
@@ -204,22 +206,22 @@ function set_highlight(d){
 
 // Zoom logic
 zoom.on("zoom", function() {
-var stroke = nominal_stroke;
-var base_radius = nominal_base_node_size;
-if (nominal_base_node_size*zoom.scale()>max_base_node_size) {
-  base_radius = max_base_node_size/zoom.scale();}
-circle.attr("d", d3.svg.symbol()
-  .size(function(d) { return d.size * 50; })
-  .type(function(d) { return d.type; }))
-if (!text_center) text.attr("dx", function(d) {
-  return (size(d.size)*base_radius/nominal_base_node_size||base_radius); });
+  var stroke = nominal_stroke;
+  var base_radius = nominal_base_node_size;
+  if (nominal_base_node_size*zoom.scale()>max_base_node_size) {
+    base_radius = max_base_node_size/zoom.scale();}
+  circle.attr("d", d3.svg.symbol()
+    .size(function(d) { return d.size * 50; })
+    .type(function(d) { return d.type; }))
+  if (!text_center) text.attr("dx", function(d) {
+    return (size(d.size)*base_radius/nominal_base_node_size||base_radius); });
 
-var text_size = nominal_text_size;
-if (nominal_text_size*zoom.scale()>max_text_size) {
-  text_size = max_text_size/zoom.scale(); }
-text.style("font-size",text_size + "px");
+  var text_size = nominal_text_size;
+  if (nominal_text_size*zoom.scale()>max_text_size) {
+    text_size = max_text_size/zoom.scale(); }
+  text.style("font-size",text_size + "px");
 
-g.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
+  g.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
 });
 
 svg.call(zoom);
@@ -257,45 +259,45 @@ function isNumber(n) {
 
 // Key press events
 window.addEventListener("keydown", function (event) {
-if (event.defaultPrevented) {
-  return; // Do nothing if the event was already processed
-}
-switch (event.key) {
-  case "s":
-    // Do something for "s" key press.
-    node.style("filter", "url(#drop-shadow)");
-    break;
-  case "c":
-    // Do something for "s" key press.
-    node.style("filter", null);
-    break;
-  case "p":
-    // Do something for "p" key press.
-    d3.select("body").attr('id', null).attr('id', "print")
-    break;
-  case "d":
-    // Do something for "d" key press.
-    d3.select("body").attr('id', null).attr('id', "display")
-    break;
-  case "z":
-    force.gravity(0.0)
-         .charge(0.0);
-    resize();
-    break
-  case "m":
-    force.gravity(0.07)
-         .charge(-1);
-    resize();
-    break
-  case "e":
-    force.gravity(0.4)
-         .charge(-600);
+  if (event.defaultPrevented) {
+    return; // Do nothing if the event was already processed
+  }
+  switch (event.key) {
+    case "s":
+      // Do something for "s" key press.
+      node.style("filter", "url(#drop-shadow)");
+      break;
+    case "c":
+      // Do something for "s" key press.
+      node.style("filter", null);
+      break;
+    case "p":
+      // Do something for "p" key press.
+      d3.select("body").attr('id', null).attr('id', "print")
+      break;
+    case "d":
+      // Do something for "d" key press.
+      d3.select("body").attr('id', null).attr('id', "display")
+      break;
+    case "z":
+      force.gravity(0.0)
+           .charge(0.0);
+      resize();
+      break
+    case "m":
+      force.gravity(0.07)
+           .charge(-1);
+      resize();
+      break
+    case "e":
+      force.gravity(0.4)
+           .charge(-600);
 
-    resize();
-    break
-  default:
-    return; // Quit when this doesn't handle the key event.
-}
-// Cancel the default action to avoid it being handled twice
-event.preventDefault();
+      resize();
+      break
+    default:
+      return; // Quit when this doesn't handle the key event.
+  }
+  // Cancel the default action to avoid it being handled twice
+  event.preventDefault();
 }, true);
