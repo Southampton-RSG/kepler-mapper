@@ -16,7 +16,7 @@ var text_center = false;
 var outline = false;
 
 // Size for zooming
-var size = d3.scale.pow().exponent(1)
+var size = d3.scalePow().exponent(1)
            .domain([1,100])
            .range([8,24]);
 
@@ -29,7 +29,7 @@ d3.select("#meta_control").on("click", function() {
 });
 
 // Color settings: Ordinal Scale of ["0"-"30"] hot-to-cold
-var color = d3.scale.ordinal()
+var color = d3.scaleOrdinal()
             .domain(["0","1", "2", "3", "4", "5", "6", "7", "8", "9", "10",
                      "11", "12", "13","14","15","16","17","18","19","20",
                      "21","22","23","24","25","26","27","28","29","30"])
@@ -40,11 +40,18 @@ var color = d3.scale.ordinal()
                     "#0084ff","#0064ff","#0044ff","#0022ff","#0002ff","#0100ff",
                     "#0300ff","#0500ff"]);
 // Force settings
-var force = d3.layout.force()
-            .linkDistance(5)
-            .gravity(0.2)
-            .charge(-1200)
-            .size([w,h]);
+function gravity(alpha) {
+ return function(d) {
+   d.y += (d.cy - d.y) * alpha;
+   d.x += (d.cx - d.x) * alpha;
+ };
+}
+
+var force = d3.forceSimulation()
+            .force("charge", d3.forceManyBody().strength(-1200))
+            .force("gravity",gravity(0.20))
+            .force("link", d3.forceLink().id(function(d) { return d.index; }))
+            .force("collide", d3.forceCollide(30).strength(1).iterations(1));
 
 // Variety of variable inits
 var highlight_color = "blue";
@@ -60,24 +67,22 @@ var max_stroke = 4.5;
 var max_base_node_size = 36;
 var min_zoom = 0.1;
 var max_zoom = 7;
-var zoom = d3.behavior.zoom().scaleExtent([min_zoom,max_zoom]);
+var zoom = d3.zoom().scaleExtent([min_zoom,max_zoom]);
 var g = svg.append("g");
 
 svg.style("cursor","move");
 
 var graph = JSON.parse(document.getElementById("json_graph").dataset.graph);
 
-force
-  .nodes(graph.nodes)
-  .links(graph.links)
-  .start();
+force.nodes(graph.nodes);
+force.force("link").links(graph.links);
 
 var link = g.selectAll(".link")
             .data(graph.links)
             .enter().append("line")
               .attr("class", "link")
               .style("stroke-width", function(d) { return d.w * nominal_stroke; })
-              .style("stroke-width", function(d) { return d.w * nominal_stroke; })
+              .style("stroke-width", function(d) { return d.w * nominal_stroke; });
               //.style("stroke", function(d) {
               //  if (isNumber(d.score) && d.score>=0) return color(d.score);
               //  else return default_link_color; })
@@ -85,8 +90,8 @@ var link = g.selectAll(".link")
 var node = g.selectAll(".node")
             .data(graph.nodes)
             .enter().append("g")
-              .attr("class", "node")
-              .call(force.drag);
+              .attr("class", "node");
+            //  .call(force.drag); // CHANGE THIS
 
 node.on("dblclick.zoom", function(d) { d3.event.stopPropagation();
   var dcx = (window.innerWidth/2-d.x*zoom.scale());
@@ -134,9 +139,8 @@ dropShadowFilter.append('svg:feBlend')
   .attr('mode', 'normal');
 
 var circle = node.append("path")
-  .attr("d", d3.svg.symbol()
-    .size(function(d) { return d.size * 50; })
-    .type(function(d) { return d.type; }))
+  .attr("d", d3.symbol()
+    .size(function(d) { return d.size * 50; }))
   .attr("class", "circle")
   .style(tocolor, function(d) {
     return color(d.color);});
@@ -201,7 +205,7 @@ var stroke = nominal_stroke;
 var base_radius = nominal_base_node_size;
 if (nominal_base_node_size*zoom.scale()>max_base_node_size) {
   base_radius = max_base_node_size/zoom.scale();}
-circle.attr("d", d3.svg.symbol()
+circle.attr("d", d3.symbol()
   .size(function(d) { return d.size * 50; })
   .type(function(d) { return d.type; }))
 if (!text_center) text.attr("dx", function(d) {
@@ -237,11 +241,11 @@ function resize() {
   var width = document.getElementById("canvas").offsetWidth;
   var height = document.getElementById("canvas").offsetHeight;
   svg.attr("width", width).attr("height", height);
-
-  force.size([force.size()[0]+(width-w)/zoom.scale(),
-              force.size()[1]+(height-h)/zoom.scale()]).resume();
-    w = width;
-    h = height;
+  //
+  // force.size([force.size()[0]+(width-w)/zoom.scale(),
+  //             force.size()[1]+(height-h)/zoom.scale()]).resume();
+  //   w = width;
+  //   h = height;
 }
 
 function isNumber(n) {
