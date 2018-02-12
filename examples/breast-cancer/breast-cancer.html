@@ -341,8 +341,8 @@ function gravity(alpha) {
 }
 
 var force = d3.forceSimulation()
-            .force("charge", d3.forceManyBody().strength(-1200))
-            .force("gravity",gravity(0.20))
+            .force("charge", d3.forceManyBody().strength(-120))
+            .force("gravity",gravity(0.25))
             .force("link", d3.forceLink().id(function(d) { return d.index; }))
             .force("collide", d3.forceCollide(30).strength(1).iterations(1));
 

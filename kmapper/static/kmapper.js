@@ -51,7 +51,7 @@ var force = d3.forceSimulation()
             .force("charge", d3.forceManyBody().strength(-1200))
             .force("gravity",gravity(0.20))
             .force("link", d3.forceLink().id(function(d) { return d.index; }))
-            .force("collide", d3.forceCollide(30).strength(1).iterations(1));
+            .force("collide", d3.forceCollide(10).strength(1).iterations(1));
 
 // Variety of variable inits
 var highlight_color = "blue";
