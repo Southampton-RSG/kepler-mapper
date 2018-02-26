@@ -9,7 +9,10 @@ var h = height;
 // We draw the graph in SVG
 var svg = d3.select("#canvas").append("svg")
           .attr("width", width)
-          .attr("height", height);
+          .attr("height", height)
+          .on("contextmenu", function (d, i) {
+            d3.event.preventDefault(); // Block right-clicks
+           });
 
 var focus_node = null, highlight_node = null;
 var text_center = false;
@@ -61,16 +64,70 @@ var max_base_node_size = 36;
 var min_zoom = 0.1;
 var max_zoom = 7;
 var zoom = d3.behavior.zoom().scaleExtent([min_zoom,max_zoom]);
-
-
 var g = svg.append("g");
 
-// Joint-the-Dots: We add the lasso area
-var lasso_area = g.append('rect')
-  .attr('width', width)
-  .attr('height', height)
-  .style('opacity', 0.0);
-// Join-the-Dots
+// Set variable to disable the keypress catching code when we're trying to type a filename
+var lasso_active = false;
+
+// Create the area where the lasso event can be triggered
+var lasso_area = g.append("rect")
+        .attr("width", w)
+        .attr("height", h)
+        .style("opacity", 0);
+
+// Set-up lasso instance
+var lasso = d3.lasso()
+       .closePathDistance(999) // max distance for the lasso loop to be closed
+       .closePathSelect(true) // can items be selected by closing the path?
+       .hoverSelect(true) // can items by selected by hovering over them?
+       .area(lasso_area) // area where the lasso can be started
+       .on("start", lasso_start) // lasso start function
+       .on("draw", lasso_draw) // lasso draw function
+       .on("end", lasso_end); // lasso end function
+
+// Lasso functions to execute while lassoing
+function lasso_start() {
+  // Style the dots as all unselected, and disable the export button
+  lasso.items()
+  .classed({"not_possible":true, "selected":false, "excluded":false}); // style as not possible
+};
+
+function lasso_draw() {
+  // Style the possible dots
+  lasso.items().filter(function(d) {return d.possible===true})
+  .classed({"not_possible":false, "possible":true});
+
+  // Style the not possible dot
+  lasso.items().filter(function(d) {return d.possible===false})
+  .classed({"not_possible":true, "possible":false});
+};
+
+function lasso_end() {
+  // If the selection is nonzero
+  if(!lasso.items().filter(function(d) {return d.selected===true}).empty()) {
+    // Style the selected dots & nonselected dots, and enable export button
+    lasso.items().filter(function(d) {return d.selected===true})
+    .classed({"not_possible":false,"possible":false, "excluded":false});
+    lasso.items().filter(function(d) {return d.selected===false})
+    .classed({"not_possible":false, "possible":false, "excluded":true});
+
+    // Retrieve the data for the selected points, and concatenate the names into a request string
+    // Then send that request to the server
+    lasso_active = true;
+    data = lasso.items().filter(function(d) {return d.selected===true}).data();
+    names = []
+    for (var i = 0; i < data.length; i++) {
+      names.push(data[i].name);
+    }
+    names_joined = names.join(',');
+    $('#lasso_save').load("/visualisation/save_input/");
+
+  } else {
+    // Reset everyone's style
+    lasso.items().classed({"not_possible":false,"possible":false, "excluded":false});
+  }
+};
+
 
 svg.style("cursor","move");
 
@@ -80,29 +137,6 @@ force
   .nodes(graph.nodes)
   .links(graph.links)
   .start();
-
-var link = g.selectAll(".link")
-            .data(graph.links)
-            .enter().append("line")
-              .attr("class", "link")
-              .style("stroke-width", function(d) { return d.w * nominal_stroke; })
-              .style("stroke-width", function(d) { return d.w * nominal_stroke; })
-              //.style("stroke", function(d) {
-              //  if (isNumber(d.score) && d.score>=0) return color(d.score);
-              //  else return default_link_color; })
-
-var node = g.selectAll(".node")
-            .data(graph.nodes)
-            .enter().append("g")
-              .attr("class", "node")
-              .call(force.drag);
-
-node.on("dblclick.zoom", function(d) { d3.event.stopPropagation();
-  var dcx = (window.innerWidth/2-d.x*zoom.scale());
-  var dcy = (window.innerHeight/2-d.y*zoom.scale());
-  zoom.translate([dcx,dcy]);
-  g.attr("transform", "translate("+ dcx + "," + dcy  + ")scale(" + zoom.scale() + ")");
-});
 
 var tocolor = "fill";
 var towhite = "stroke";
@@ -142,13 +176,44 @@ dropShadowFilter.append('svg:feBlend')
   .attr('in2', 'the-shadow')
   .attr('mode', 'normal');
 
-var circle = node.append("path")
-  .attr("d", d3.svg.symbol()
-    .size(function(d) { return d.size * 50; })
-    .type(function(d) { return d.type; }))
-  .attr("class", "circle")
-  .style(tocolor, function(d) {
-    return color(d.color);});
+
+var link = g.selectAll(".link")
+            .data(graph.links)
+            .enter().append("line")
+              .attr("class", "link")
+              .style("stroke-width", function(d) { return d.w * nominal_stroke; })
+              .style("stroke-width", function(d) { return d.w * nominal_stroke; })
+              //.style("stroke", function(d) {
+              //  if (isNumber(d.score) && d.score>=0) return color(d.score);
+              //  else return default_link_color; })
+
+var node = g.selectAll(".node")
+            .data(graph.nodes)
+            .enter().append("g")
+              .attr("class", "node")
+              .call(force.drag).append("path") // This section copied from 'circle' later on
+                .attr("d", d3.svg.symbol()
+                  .size(function(d) { return d.size * 50; })
+                  .type(function(d) { return d.type; }))
+                .attr("class", "circle")
+                .style(tocolor, function(d) {
+                  return color(d.color);});
+
+
+node.on("dblclick.zoom", function(d) { d3.event.stopPropagation();
+  var dcx = (window.innerWidth/2-d.x*zoom.scale());
+  var dcy = (window.innerHeight/2-d.y*zoom.scale());
+  zoom.translate([dcx,dcy]);
+  g.attr("transform", "translate("+ dcx + "," + dcy  + ")scale(" + zoom.scale() + ")");
+});
+
+// var circle = node.append("path")
+//   .attr("d", d3.svg.symbol()
+//     .size(function(d) { return d.size * 50; })
+//     .type(function(d) { return d.type; }))
+//   .attr("class", "circle")
+//   .style(tocolor, function(d) {
+//     return color(d.color);});
 //.style("filter", "url(#drop-shadow)");
 
 var text = g.selectAll(".text")
@@ -176,7 +241,7 @@ node.on("mouseover", function(d) {
   d3.select("#tooltip").style("display", "block");
   d3.select("#tooltip_content").html(d.tooltip + "<br/>");
   }).on("mousedown", function(d) {
-    d3.event.stopPropagation();
+    // d3.event.stopPropagation(); // Removed to allow zooming
     focus_node = d;
     if (highlight_node === null) set_highlight(d)
   }).on("mouseout", function(d) {
@@ -206,22 +271,25 @@ function set_highlight(d){
 
 // Zoom logic
 zoom.on("zoom", function() {
-  var stroke = nominal_stroke;
-  var base_radius = nominal_base_node_size;
-  if (nominal_base_node_size*zoom.scale()>max_base_node_size) {
-    base_radius = max_base_node_size/zoom.scale();}
-  circle.attr("d", d3.svg.symbol()
-    .size(function(d) { return d.size * 50; })
-    .type(function(d) { return d.type; }))
-  if (!text_center) text.attr("dx", function(d) {
-    return (size(d.size)*base_radius/nominal_base_node_size||base_radius); });
+  // Only pan on right-click!
+  if(d3.event.sourceEvent.button != 0 || d3.event.sourceEvent.type === 'wheel'){
+    var stroke = nominal_stroke;
+    var base_radius = nominal_base_node_size;
+    if (nominal_base_node_size*zoom.scale()>max_base_node_size) {
+      base_radius = max_base_node_size/zoom.scale();}
+    node.attr("d", d3.svg.symbol() // Formerly circle
+      .size(function(d) { return d.size * 50; })
+      .type(function(d) { return d.type; }))
+    if (!text_center) text.attr("dx", function(d) {
+      return (size(d.size)*base_radius/nominal_base_node_size||base_radius); });
 
-  var text_size = nominal_text_size;
-  if (nominal_text_size*zoom.scale()>max_text_size) {
-    text_size = max_text_size/zoom.scale(); }
-  text.style("font-size",text_size + "px");
+    var text_size = nominal_text_size;
+    if (nominal_text_size*zoom.scale()>max_text_size) {
+      text_size = max_text_size/zoom.scale(); }
+    text.style("font-size",text_size + "px");
 
-  g.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
+    g.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
+  }
 });
 
 svg.call(zoom);
@@ -259,8 +327,9 @@ function isNumber(n) {
 
 // Key press events
 window.addEventListener("keydown", function (event) {
-  if (event.defaultPrevented) {
-    return; // Do nothing if the event was already processed
+  if (event.defaultPrevented || lasso_active) {
+    return; // Do nothing if the event was already processed or we're trying to lasso something and
+    // the user is typing the name out
   }
   switch (event.key) {
     case "s":
@@ -301,3 +370,17 @@ window.addEventListener("keydown", function (event) {
   // Cancel the default action to avoid it being handled twice
   event.preventDefault();
 }, true);
+
+// Call the lasso
+lasso.items(d3.selectAll(".node"));
+lasso_area.on("mousedown", function() {
+  if(d3.event.button != 0){
+    var e = d3.event;
+    var e2 = document.createEvent('MouseEvent');
+    e2.initMouseEvent(e.type,e.bubbles,e.cancelable,e.view, e.detail,e.screenX,e.screenY,e.clientX,e.clientY,e.ctrlKey,e.altKey,e.shiftKey,e.metaKey,e.button,e.relatedTarget);
+
+    d3.event.stopImmediatePropagation();
+    svg.select("path").node().dispatchEvent(e2);
+  };
+})
+g.call(lasso);

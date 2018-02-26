@@ -20,6 +20,10 @@
   <div id="header">
     <noscript><b>Requires JavaScript (d3.js) for visualizations</b></noscript>
     <h1>{{ title }}</h1>
+    {# Join-the-Dots #}
+    <div id="lasso_save">
+    </div>
+    {# Join-the-Dots #}
   </div>
   <div id="canvas">
 
@@ -41,64 +45,12 @@
   </div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.5/d3.min.js"></script>
-  <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/4.13.0/d3.min.js"></script> -->
-  <script>{{ js_text }}</script>
-
-
+  {# Join-the-Dots #}
   <script src="http://axc.net/code_libraries/lasso/lasso.min.js"></script>
-  <script>
-    // Lasso functions to execute while lassoing
-    var lasso_start = function() {
-      // Style the dots as all unselected, and disable the export button
-      d3.select('#export_button').attr("class", "export_invalid");
-      lasso.items()
-        .classed({"not_possible":true, "selected":false, "excluded":false}); // style as not possible
-    };
-
-    var lasso_draw = function() {
-      // Style the possible dots
-      lasso.items().filter(function(d) {return d.possible===true})
-        .classed({"not_possible":false, "possible":true});
-
-      // Style the not possible dot
-      lasso.items().filter(function(d) {return d.possible===false})
-        .classed({"not_possible":true, "possible":false});
-    };
-
-    var lasso_end = function() {
-      // Reset the color of all dots
-      lasso.items()
-         .style("fill", function(d) {return color(d.color)});
-
-      // If the selection is nonzero
-      if(!lasso.items().filter(function(d) {return d.selected===true}).empty())
-      {
-        // Style the selected dots & nonselected dots, and enable export button
-        lasso.items().filter(function(d) {return d.selected===true})
-          .classed({"not_possible":false,"possible":false, "excluded":false});
-        lasso.items().filter(function(d) {return d.selected===false})
-          .classed({"not_possible":false, "possible":false, "excluded":true});
-        d3.select('#export_button').attr("class", "export_valid");
-
-      } else {
-        // Reset everyone's style
-        lasso.items().classed({"not_possible":false,"possible":false, "excluded":false});      }
-    };
-
-    // Define the lasso
-    var lasso = d3.lasso()
-          .closePathDistance(999) // max distance for the lasso loop to be closed
-          .closePathSelect(true) // can items be selected by closing the path?
-          .hoverSelect(false) // can items by selected by hovering over them?
-          .area(lasso_area) // area where the lasso can be started
-          .on("start",lasso_start) // lasso start function
-          .on("draw",lasso_draw) // lasso draw function
-          .on("end",lasso_end); // lasso end function
-
-    // Set up the lasso dataset and trigger it
-    lasso.items(d3.selectAll(".node"))
-    g.call(lasso);
-  </script>
+  <script class="jsbin" src="http://ajax.googleapis.com/ajax/libs/jquery/1/jquery.js"></script>
+  <script class="jsbin" src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.5/jquery-ui.js"></script>
+  {# Join-the-Dots #}
+  <script>{{ js_text }}</script>
 </body>
 
 </html>
