@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <div id="json_graph" data-graph='{{ json_graph }}' style="display:none"></div>
+  <meta charset="utf-8">
+  <meta name="generator" content="KeplerMapper">
+  <title>{{ title }} | KeplerMapper</title>
+
+  <link rel="icon" type="image/png" href="https://i.imgur.com/2eZcTZn.png" />
+  <link href='https://fonts.googleapis.com/css?family=Roboto+Mono:700,300' rel='stylesheet' type='text/css'>
+  <style> {{ css_text }} </style>
+
+  {# Join-the-Dots #}
+  <link href='static/styles/lasso.css' rel='stylesheet' type='text/css'>
+  {# Join-the-Dots #}
+</head>
+
+<body id="display"> <!-- onload="addScript('static/scripts/lasso.js')" -->
+  <div id="header">
+    <noscript><b>Requires JavaScript (d3.js) for visualizations</b></noscript>
+    <h1>{{ title }}</h1>
+    {# Join-the-Dots #}
+    <div id="lasso_save">
+    </div>
+    {# Join-the-Dots #}
+  </div>
+  <div id="canvas">
+
+  </div>
+  <div id="tooltip">
+    <div id="tooltip_control">
+      <a href="#"><small>[-]</small></a>
+    </div>
+    <h2>Cluster Meta</h2>
+    <div id="tooltip_content">
+
+    </div>
+  </div>
+  <div id="meta">
+    <div id="meta_control">
+      <a href="#"><small>[-]</small></a>
+    </div>
+    <h2>Graph Meta</h2> {{ meta }} {{ color_distribution }}
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.5/d3.min.js"></script>
+  {# Join-the-Dots #}
+  <script src="http://axc.net/code_libraries/lasso/lasso.min.js"></script>
+  <script class="jsbin" src="http://ajax.googleapis.com/ajax/libs/jquery/1/jquery.js"></script>
+  <script class="jsbin" src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.5/jquery-ui.js"></script>
+  {# Join-the-Dots #}
+  <script>{{ js_text }}</script>
+</body>
+
+</html>
