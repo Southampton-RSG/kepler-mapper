@@ -314,6 +314,7 @@ function resize() {
   var width = document.getElementById("canvas").offsetWidth;
   var height = document.getElementById("canvas").offsetHeight;
   svg.attr("width", width).attr("height", height);
+  lasso_area.attr("width", width).attr("height", height);
 
   force.size([force.size()[0]+(width-w)/zoom.scale(),
               force.size()[1]+(height-h)/zoom.scale()]).resume();
