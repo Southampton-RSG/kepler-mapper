@@ -71,13 +71,13 @@ var lasso_active = false;
 
 // Create the area where the lasso event can be triggered
 var lasso_area = g.append("rect")
-        .attr("width", w)
-        .attr("height", h)
+        .attr("width", 9999999999)
+        .attr("height", 9999999999)
         .style("opacity", 0);
 
 // Set-up lasso instance
 var lasso = d3.lasso()
-       .closePathDistance(999) // max distance for the lasso loop to be closed
+       .closePathDistance(9999999999) // max distance for the lasso loop to be closed
        .closePathSelect(true) // can items be selected by closing the path?
        .hoverSelect(true) // can items by selected by hovering over them?
        .area(lasso_area) // area where the lasso can be started
@@ -311,11 +311,9 @@ node.attr("cx", function(d) { return d.x; })
 // Resizing window and redraws
 function resize() {
   var width = window.innerWidth, height = window.innerHeight;
+  svg.attr("width", width).attr("height", height);
   var width = document.getElementById("canvas").offsetWidth;
   var height = document.getElementById("canvas").offsetHeight;
-  svg.attr("width", width).attr("height", height);
-  lasso_area.attr("width", width).attr("height", height);
-
   force.size([force.size()[0]+(width-w)/zoom.scale(),
               force.size()[1]+(height-h)/zoom.scale()]).resume();
     w = width;
