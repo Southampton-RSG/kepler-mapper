@@ -42,12 +42,13 @@ var color = d3.scale.ordinal()
                     "#00ff83","#00ffd0","#00e4ff","#00c4ff","#00a4ff","#00a4ff",
                     "#0084ff","#0064ff","#0044ff","#0022ff","#0002ff","#0100ff",
                     "#0300ff","#0500ff"]);
+
 // Force settings
 var force = d3.layout.force()
             .linkDistance(5)
             .gravity(0.2)
             .charge(-1200)
-            .size([w,h]);
+            .size([w, h]);
 
 // Variety of variable inits
 var highlight_color = "blue";
@@ -64,20 +65,26 @@ var max_base_node_size = 36;
 var min_zoom = 0.1;
 var max_zoom = 7;
 var zoom = d3.behavior.zoom().scaleExtent([min_zoom,max_zoom]);
-var g = svg.append("g");
 
+var lasso_area_size = 5000;
+var lasso_area_offset = -(lasso_area_size/2.0);
 // Set variable to disable the keypress catching code when we're trying to type a filename
 var lasso_active = false;
 
+var g = svg.append("g");
+
 // Create the area where the lasso event can be triggered
 var lasso_area = g.append("rect")
-        .attr("width", 99999999)
-        .attr("height", 99999999)
-        .style("opacity", 0);
+        .attr("width", w)
+        .attr("height", h)
+        .style('opacity', 0.0)
+        .style("stroke", 'red')
+        .style("stroke-width", 5)
+        .style("opacity", 0.25);
 
 // Set-up lasso instance
 var lasso = d3.lasso()
-       .closePathDistance(99999999) // max distance for the lasso loop to be closed
+       .closePathDistance(lasso_area_size) // max distance for the lasso loop to be closed
        .closePathSelect(true) // can items be selected by closing the path?
        .hoverSelect(true) // can items by selected by hovering over them?
        .area(lasso_area) // area where the lasso can be started
@@ -204,7 +211,9 @@ node.on("dblclick.zoom", function(d) { d3.event.stopPropagation();
   var dcx = (window.innerWidth/2-d.x*zoom.scale());
   var dcy = (window.innerHeight/2-d.y*zoom.scale());
   zoom.translate([dcx,dcy]);
+  // g.attr("transform", "translate("+ dcx + "," + dcy  + ")scale(" + zoom.scale() + ")");
   g.attr("transform", "translate("+ dcx + "," + dcy  + ")scale(" + zoom.scale() + ")");
+
 });
 
 // var circle = node.append("path")
@@ -287,7 +296,6 @@ zoom.on("zoom", function() {
     if (nominal_text_size*zoom.scale()>max_text_size) {
       text_size = max_text_size/zoom.scale(); }
     text.style("font-size",text_size + "px");
-
     g.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
   }
 });
@@ -298,21 +306,20 @@ d3.select(window).on("resize", resize);
 
 // Animation per tick
 force.on("tick", function() {
-node.attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
-text.attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
-link.attr("x1", function(d) { return d.source.x; })
-  .attr("y1", function(d) { return d.source.y; })
-  .attr("x2", function(d) { return d.target.x; })
-  .attr("y2", function(d) { return d.target.y; });
-node.attr("cx", function(d) { return d.x; })
-  .attr("cy", function(d) { return d.y; });
+  node.attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
+  text.attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
+  link.attr("x1", function(d) { return d.source.x; })
+    .attr("y1", function(d) { return d.source.y; })
+    .attr("x2", function(d) { return d.target.x; })
+    .attr("y2", function(d) { return d.target.y; });
+  node.attr("cx", function(d) { return d.x; })
+    .attr("cy", function(d) { return d.y; });
 });
 
 // Resizing window and redraws
 function resize() {
   var width = window.innerWidth, height = window.innerHeight;
   svg.attr("width", width).attr("height", height);
-  lasso_area.attr("width", 99999999).attr("height", 99999999)
   var width = document.getElementById("canvas").offsetWidth;
   var height = document.getElementById("canvas").offsetHeight;
   force.size([force.size()[0]+(width-w)/zoom.scale(),
@@ -374,13 +381,23 @@ window.addEventListener("keydown", function (event) {
 // Call the lasso
 lasso.items(d3.selectAll(".node"));
 lasso_area.on("mousedown", function() {
+  console.log('down: '+d3.event.button)
   if(d3.event.button != 0){
     var e = d3.event;
-    var e2 = document.createEvent('MouseEvent');
-    e2.initMouseEvent(e.type,e.bubbles,e.cancelable,e.view, e.detail,e.screenX,e.screenY,e.clientX,e.clientY,e.ctrlKey,e.altKey,e.shiftKey,e.metaKey,e.button,e.relatedTarget);
+    var e2 = new MouseEvent('mousedown',
+                            {
+                              'screenX': e.screenX, 'screenY': e.screenY,
+                              'clientX': e.clientX, 'clientY': e.clientY,
+                              'button': e.button, 'buttons': e.buttons,
+                              'ctrlKey': e.ctrlKey, 'shiftKey': e.shiftKey,
+                              'altKey': e.altKey, 'metaKey': e.metaKey,
+                              'relatedTarget': e.relatedTarget,
+                              'detail': e.detail, 'view': e.view,
+                              'bubbles': e.bubbles, 'cancelable': e.cancelable
+                            });
 
     d3.event.stopImmediatePropagation();
     svg.select("path").node().dispatchEvent(e2);
-  };
+  }
 })
 g.call(lasso);
