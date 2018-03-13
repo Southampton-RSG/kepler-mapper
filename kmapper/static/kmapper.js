@@ -1,3 +1,13 @@
+// Browser detection from https://wp-mix.com/detect-chrome-ie-firefox-opera-safari/
+var chrome   = navigator.userAgent.indexOf('Chrome') > -1;
+var explorer = navigator.userAgent.indexOf('MSIE') > -1;
+var firefox  = navigator.userAgent.indexOf('Firefox') > -1;
+var safari   = navigator.userAgent.indexOf("Safari") > -1;
+var camino   = navigator.userAgent.indexOf("Camino") > -1;
+var opera    = navigator.userAgent.toLowerCase().indexOf("op") > -1;
+if ((chrome) && (safari)) safari = false;
+if ((chrome) && (opera)) chrome = false;
+
 // Height and width settings
 var canvas_height = window.innerHeight - 5;
 document.getElementById("canvas").style.height = canvas_height + "px";
@@ -290,7 +300,7 @@ function set_highlight(d){
 // Zoom logic
 zoom.on("zoom", function() {
   // Only pan on right-click!
-  if(d3.event.sourceEvent.button != 0 || d3.event.sourceEvent.type === 'wheel'){
+  if(d3.event.sourceEvent.type === 'wheel' || (!chrome && d3.event.sourceEvent.button != 0) || (chrome && d3.event.sourceEvent.buttons == 2)){
     var stroke = nominal_stroke;
     var base_radius = nominal_base_node_size;
     if (nominal_base_node_size*zoom.scale()>max_base_node_size) {
