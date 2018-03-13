@@ -14,8 +14,6 @@ var svg = d3.select("#canvas").append("svg")
             d3.event.preventDefault(); // Block right-clicks
            });
 
-console.log(svg);
-
 var focus_node = null, highlight_node = null;
 var text_center = false;
 var outline = false;
@@ -45,18 +43,24 @@ var color = d3.scale.ordinal()
                     "#0084ff","#0064ff","#0044ff","#0022ff","#0002ff","#0100ff",
                     "#0300ff","#0500ff"]);
 
-// Force settings
-var force = d3.layout.force()
-            .linkDistance(5)
-            .gravity(0.2)
-            .charge(-1200)
-            .size([w, h]);
-
 // Variety of variable inits
 var highlight_color = "blue";
 var highlight_trans = 0.1;
 var default_node_color = "#ccc";
 var default_node_color = "rgba(160,160,160, 0.5)";
+
+var default_node_size = 5;  // 50 originally; km-gui
+var charge_off = 0;  // 0 originally; km-gui
+var charge_low = -1;  // -1 originally; km-gui
+var charge_medium = -60;  // -600 originally; km-gui
+var charge_high = -120;  // -1200 originally; km-gui
+var gravity_off = 0;  // 0 originally; km-gui
+var gravity_low = 0.07;  // 0.07 originally; km-gui
+var gravity_medium = 0.2;  // 0.2 originally; km-gui
+var gravity_high = 0.4;  // 0.4 originally; km-gui
+var linkDistance_medium = 0.5;  // 5.0 originally; km-gui
+var stdDeviation_medium = 1.2;  // 12.0 originally; km-gui
+
 var default_link_color = "rgba(160,160,160, 0.5)";
 var nominal_base_node_size = 8;
 var nominal_text_size = 15;
@@ -68,8 +72,13 @@ var min_zoom = 0.1;
 var max_zoom = 7;
 var zoom = d3.behavior.zoom().scaleExtent([min_zoom,max_zoom]);
 
-var lasso_area_size = 5000;
-var lasso_area_offset = -(lasso_area_size/2.0);
+// Force settings
+var force = d3.layout.force()
+            .linkDistance(linkDistance_medium)
+            .gravity(gravity_high)
+            .charge(charge_high)
+            .size([w, h]);
+
 // Set variable to disable the keypress catching code when we're trying to type a filename
 var lasso_active = false;
 
@@ -79,14 +88,14 @@ var g = svg.append("g");
 var lasso_area = g.append("rect")
         .attr("width", w)
         .attr("height", h)
-        .style('opacity', 0.0)
-        .style("stroke", 'red')
-        .style("stroke-width", 5)
-        .style("opacity", 0.25);
+        .style('opacity', 0.0);
+        // .style("stroke", 'red')
+        // .style("stroke-width", 5)
+        // .style("opacity", 0.25);
 
 // Set-up lasso instance
 var lasso = d3.lasso()
-       .closePathDistance(lasso_area_size) // max distance for the lasso loop to be closed
+       .closePathDistance(999999) // max distance for the lasso loop to be closed
        .closePathSelect(true) // can items be selected by closing the path?
        .hoverSelect(true) // can items by selected by hovering over them?
        .area(lasso_area) // area where the lasso can be started
@@ -164,7 +173,7 @@ var dropShadowFilter = defs.append('svg:filter')
   .attr('height', '250%');
 dropShadowFilter.append('svg:feGaussianBlur')
   .attr('in', 'SourceGraphic')
-  .attr('stdDeviation', 12)
+  .attr('stdDeviation', stdDeviation_medium)
   .attr('result', 'blur-out');
 dropShadowFilter.append('svg:feColorMatrix')
   .attr('in', 'blur-out')
@@ -202,7 +211,7 @@ var node = g.selectAll(".node")
               .attr("class", "node")
               .call(force.drag).append("path") // This section copied from 'circle' later on
                 .attr("d", d3.svg.symbol()
-                  .size(function(d) { return d.size * 50; })
+                  .size(function(d) { return d.size * default_node_size; })
                   .type(function(d) { return d.type; }))
                 .attr("class", "circle")
                 .style(tocolor, function(d) {
@@ -287,7 +296,7 @@ zoom.on("zoom", function() {
     if (nominal_base_node_size*zoom.scale()>max_base_node_size) {
       base_radius = max_base_node_size/zoom.scale();}
     node.attr("d", d3.svg.symbol() // Formerly circle
-      .size(function(d) { return d.size * 50; })
+      .size(function(d) { return d.size * default_node_size; })
       .type(function(d) { return d.type; }))
     if (!text_center) text.attr("dx", function(d) {
       return (size(d.size)*base_radius/nominal_base_node_size||base_radius); });
@@ -356,18 +365,18 @@ window.addEventListener("keydown", function (event) {
       d3.select("body").attr('id', null).attr('id', "display")
       break;
     case "z":
-      force.gravity(0.0)
-           .charge(0.0);
+      force.gravity(gravity_off)
+           .charge(charge_off);
       resize();
       break
     case "m":
-      force.gravity(0.07)
-           .charge(-1);
+      force.gravity(gravity_low)
+           .charge(charge_low);
       resize();
       break
     case "e":
-      force.gravity(0.4)
-           .charge(-600);
+      force.gravity(gravity_medium)
+           .charge(charge_medium);
 
       resize();
       break
@@ -380,24 +389,4 @@ window.addEventListener("keydown", function (event) {
 
 // Call the lasso
 lasso.items(d3.selectAll(".node"));
-lasso_area.on("mousedown", function() {
-  if(d3.event.button != 0){
-    var e = d3.event;
-    var e2 = new MouseEvent('mousedown',
-                            {
-                              'screenX': e.screenX, 'screenY': e.screenY,
-                              'clientX': e.clientX, 'clientY': e.clientY,
-                              'button': e.button, 'buttons': e.buttons,
-                              'ctrlKey': e.ctrlKey, 'shiftKey': e.shiftKey,
-                              'altKey': e.altKey, 'metaKey': e.metaKey,
-                              'relatedTarget': e.relatedTarget,
-                              'detail': e.detail, 'view': e.view,
-                              'bubbles': e.bubbles, 'cancelable': e.cancelable,
-                              'dataTransfer': e.dataTransfer, 'webkitForce': e.webkitForce
-                            });
-
-    d3.event.stopImmediatePropagation();
-    svg.node().dispatchEvent(e2);
-  }
-})
 g.call(lasso);
