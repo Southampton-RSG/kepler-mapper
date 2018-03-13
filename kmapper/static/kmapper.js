@@ -14,6 +14,8 @@ var svg = d3.select("#canvas").append("svg")
             d3.event.preventDefault(); // Block right-clicks
            });
 
+console.log(svg);
+
 var focus_node = null, highlight_node = null;
 var text_center = false;
 var outline = false;
@@ -245,7 +247,6 @@ if (text_center) {
 // Mouse events
 node.on("mouseover", function(d) {
   set_highlight(d);
-  console.log("node hober");
 
   d3.select("#tooltip").style("display", "block");
   d3.select("#tooltip_content").html(d.tooltip + "<br/>");
@@ -254,7 +255,6 @@ node.on("mouseover", function(d) {
     focus_node = d;
     if (highlight_node === null) set_highlight(d)
   }).on("mouseout", function(d) {
-    console.log("mouseout");
     exit_highlight();
   });
 
@@ -381,7 +381,6 @@ window.addEventListener("keydown", function (event) {
 // Call the lasso
 lasso.items(d3.selectAll(".node"));
 lasso_area.on("mousedown", function() {
-  console.log('down: '+d3.event.button)
   if(d3.event.button != 0){
     var e = d3.event;
     var e2 = new MouseEvent('mousedown',
@@ -393,11 +392,12 @@ lasso_area.on("mousedown", function() {
                               'altKey': e.altKey, 'metaKey': e.metaKey,
                               'relatedTarget': e.relatedTarget,
                               'detail': e.detail, 'view': e.view,
-                              'bubbles': e.bubbles, 'cancelable': e.cancelable
+                              'bubbles': e.bubbles, 'cancelable': e.cancelable,
+                              'dataTransfer': e.dataTransfer, 'webkitForce': e.webkitForce
                             });
 
     d3.event.stopImmediatePropagation();
-    svg.select("path").node().dispatchEvent(e2);
+    svg.node().dispatchEvent(e2);
   }
 })
 g.call(lasso);
