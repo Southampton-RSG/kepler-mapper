@@ -300,8 +300,8 @@ function set_highlight(d){
 // Zoom logic
 zoom.on("zoom", function() {
   // Only pan on right-click!
-  console.log('Zoom button: '+d3.event.sourceEvent.button+', buttons: '+d3.event.sourceEvent.buttons)
-  if(d3.event.sourceEvent.type === 'wheel' || (!chrome && d3.event.sourceEvent.button != 0) || (chrome && d3.event.sourceEvent.buttons == 2)){
+  //console.log('Zoom button: '+d3.event.sourceEvent.button+', buttons: '+d3.event.sourceEvent.buttons)
+  if(d3.event.sourceEvent.type === 'wheel' || (!d3.event.sourceEvent.buttons && d3.event.sourceEvent.button != 0) || (d3.event.sourceEvent.buttons == 2)){
     var stroke = nominal_stroke;
     var base_radius = nominal_base_node_size;
     if (nominal_base_node_size*zoom.scale()>max_base_node_size) {
