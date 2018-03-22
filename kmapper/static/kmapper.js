@@ -296,7 +296,6 @@ function set_highlight(d){
   svg.style("cursor","pointer");
   if (focus_node!==null) d = focus_node;
 }
-
 // Zoom logic
 zoom.on("zoom", function() {
   // Only pan on right-click!
