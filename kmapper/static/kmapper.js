@@ -113,12 +113,13 @@ var lasso = d3.lasso()
        .on("draw", lasso_draw) // lasso draw function
        .on("end", lasso_end); // lasso end function
 
+
 // Lasso functions to execute while lassoing
 function lasso_start() {
   // Style the dots as all unselected, and disable the export button
   lasso.items()
   .classed({"not_possible":true, "selected":false, "excluded":false}); // style as not possible
-};
+}
 
 function lasso_draw() {
   // Style the possible dots
@@ -128,33 +129,36 @@ function lasso_draw() {
   // Style the not possible dot
   lasso.items().filter(function(d) {return d.possible===false})
   .classed({"not_possible":true, "possible":false});
-};
+}
 
 function lasso_end() {
+
   // If the selection is nonzero
   if(!lasso.items().filter(function(d) {return d.selected===true}).empty()) {
+
     // Style the selected dots & nonselected dots, and enable export button
     lasso.items().filter(function(d) {return d.selected===true})
-    .classed({"not_possible":false,"possible":false, "excluded":false});
+         .classed({"not_possible":false,"possible":false, "excluded":false});
     lasso.items().filter(function(d) {return d.selected===false})
-    .classed({"not_possible":false, "possible":false, "excluded":true});
+         .classed({"not_possible":false, "possible":false, "excluded":true});
 
     // Retrieve the data for the selected points, and concatenate the names into a request string
     // Then send that request to the server
     lasso_active = true;
-    data = lasso.items().filter(function(d) {return d.selected===true}).data();
-    names = []
-    for (var i = 0; i < data.length; i++) {
+    let data = lasso.items().filter(function(d) {return d.selected===true}).data();
+    let names = [];
+    for (let i = 0; i < data.length; i++) {
       names.push(data[i].name);
     }
-    names_joined = names.join(',');
-    $('#lasso_save').load("/visualisation/save_input/");
+    let names_joined = names.join(',');
+    // $('#lasso_save').load("save/"+names_joined+"/");
+    window.open("save/"+names_joined+"/", "myWindow", "width=640,height=800")
 
   } else {
     // Reset everyone's style
     lasso.items().classed({"not_possible":false,"possible":false, "excluded":false});
   }
-};
+}
 
 
 svg.style("cursor","move");
@@ -389,7 +393,7 @@ window.addEventListener("keydown", function (event) {
            .charge(charge_medium);
 
       resize();
-      break
+      break;
     default:
       return; // Quit when this doesn't handle the key event.
   }

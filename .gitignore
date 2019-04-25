@@ -54,3 +54,4 @@ MANIFEST
 setup.cfg
 dist
 *.pyc
+.idea/*
