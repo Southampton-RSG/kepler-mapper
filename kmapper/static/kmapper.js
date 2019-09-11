@@ -94,6 +94,7 @@ var lasso_active = false;
 
 var g = svg.append("g");
 
+// ========== JtD Lasso starts ==========
 // Create the area where the lasso event can be triggered
 var lasso_area = g.append("rect")
         .attr("width", w)
@@ -159,7 +160,7 @@ function lasso_end() {
     lasso.items().classed({"not_possible":false,"possible":false, "excluded":false});
   }
 }
-
+// ========== JtD Lasso Ends ==========
 
 svg.style("cursor","move");
 
@@ -401,6 +402,8 @@ window.addEventListener("keydown", function (event) {
   event.preventDefault();
 }, true);
 
+// ========== JtD Lasso Starts ==========
 // Call the lasso
 lasso.items(d3.selectAll(".node"));
 g.call(lasso);
+// ========== JtD Lasso Ends ==========
