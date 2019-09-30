@@ -1,13 +1,3 @@
-// Browser detection from https://wp-mix.com/detect-chrome-ie-firefox-opera-safari/
-var chrome   = navigator.userAgent.indexOf('Chrome') > -1;
-var explorer = navigator.userAgent.indexOf('MSIE') > -1;
-var firefox  = navigator.userAgent.indexOf('Firefox') > -1;
-var safari   = navigator.userAgent.indexOf("Safari") > -1;
-var camino   = navigator.userAgent.indexOf("Camino") > -1;
-var opera    = navigator.userAgent.toLowerCase().indexOf("op") > -1;
-if ((chrome) && (safari)) safari = false;
-if ((chrome) && (opera)) chrome = false;
-
 // Height and width settings
 var canvas_height = window.innerHeight - 5;
 document.getElementById("canvas").style.height = canvas_height + "px";
@@ -15,14 +5,6 @@ var width = document.getElementById("canvas").offsetWidth;
 var height = document.getElementById("canvas").offsetHeight;
 var w = width;
 var h = height;
-
-// We draw the graph in SVG
-var svg = d3.select("#canvas").append("svg")
-          .attr("width", width)
-          .attr("height", height)
-          .on("contextmenu", function (d, i) {
-            d3.event.preventDefault(); // Block right-clicks
-           });
 
 var focus_node = null, highlight_node = null;
 var text_center = false;
@@ -33,25 +15,6 @@ var size = d3.scale.pow().exponent(1)
            .domain([1,100])
            .range([8,24]);
 
-// Show/Hide Functionality
-d3.select("#tooltip_control").on("click", function() {
-  d3.select("#tooltip").style("display", "none");
-});
-d3.select("#meta_control").on("click", function() {
-  d3.select("#meta").style("display", "none");
-});
-
-// Color settings: Ordinal Scale of ["0"-"30"] hot-to-cold
-var color = d3.scale.ordinal()
-            .domain(["0","1", "2", "3", "4", "5", "6", "7", "8", "9", "10",
-                     "11", "12", "13","14","15","16","17","18","19","20",
-                     "21","22","23","24","25","26","27","28","29","30"])
-            .range(["#FF0000","#FF1400","#FF2800","#FF3c00","#FF5000","#FF6400",
-                    "#FF7800","#FF8c00","#FFa000","#FFb400","#FFc800","#FFdc00",
-                    "#FFf000","#fdff00","#b0ff00","#65ff00","#17ff00","#00ff36",
-                    "#00ff83","#00ffd0","#00e4ff","#00c4ff","#00a4ff","#00a4ff",
-                    "#0084ff","#0064ff","#0044ff","#0022ff","#0002ff","#0100ff",
-                    "#0300ff","#0500ff"]);
 
 // Variety of variable inits
 var highlight_color = "blue";
@@ -81,6 +44,41 @@ var max_base_node_size = 36;
 var min_zoom = 0.1;
 var max_zoom = 7;
 var zoom = d3.behavior.zoom().scaleExtent([min_zoom,max_zoom]);
+
+var tocolor = "fill";
+var towhite = "stroke";
+if (outline) {
+  tocolor = "stroke";
+  towhite = "fill";
+}
+
+// We draw the graph in SVG
+var svg = d3.select("#canvas").append("svg")
+          .attr("width", width)
+          .attr("height", height)
+          .on("contextmenu", function (d, i) {
+            d3.event.preventDefault(); // Block right-clicks
+           });
+
+// Show/Hide Functionality
+d3.select("#tooltip_control").on("click", function() {
+  d3.select("#tooltip").style("display", "none");
+});
+d3.select("#meta_control").on("click", function() {
+  d3.select("#meta").style("display", "none");
+});
+
+// Color settings: Ordinal Scale of ["0"-"30"] hot-to-cold
+var color = d3.scale.ordinal()
+            .domain(["0","1", "2", "3", "4", "5", "6", "7", "8", "9", "10",
+                     "11", "12", "13","14","15","16","17","18","19","20",
+                     "21","22","23","24","25","26","27","28","29","30"])
+            .range(["#FF0000","#FF1400","#FF2800","#FF3c00","#FF5000","#FF6400",
+                    "#FF7800","#FF8c00","#FFa000","#FFb400","#FFc800","#FFdc00",
+                    "#FFf000","#fdff00","#b0ff00","#65ff00","#17ff00","#00ff36",
+                    "#00ff83","#00ffd0","#00e4ff","#00c4ff","#00a4ff","#00a4ff",
+                    "#0084ff","#0064ff","#0044ff","#0022ff","#0002ff","#0100ff",
+                    "#0300ff","#0500ff"]);
 
 // Force settings
 var force = d3.layout.force()
@@ -171,45 +169,6 @@ force
   .links(graph.links)
   .start();
 
-var tocolor = "fill";
-var towhite = "stroke";
-if (outline) {
-  tocolor = "stroke";
-  towhite = "fill";
-}
-
-// Drop-shadow Filter
-var svg = d3.select("svg");
-var defs = svg.append("defs");
-var dropShadowFilter = defs.append('svg:filter')
-  .attr('id', 'drop-shadow')
-  .attr('filterUnits', "userSpaceOnUse")
-  .attr('width', '250%')
-  .attr('height', '250%');
-dropShadowFilter.append('svg:feGaussianBlur')
-  .attr('in', 'SourceGraphic')
-  .attr('stdDeviation', stdDeviation_medium)
-  .attr('result', 'blur-out');
-dropShadowFilter.append('svg:feColorMatrix')
-  .attr('in', 'blur-out')
-  .attr('type', 'hueRotate')
-  .attr('values', 0)
-  .attr('result', 'color-out');
-dropShadowFilter.append('svg:feOffset')
-  .attr('in', 'color-out')
-  .attr('dx', 0)
-  .attr('dy', 0)
-  .attr('result', 'the-shadow');
-dropShadowFilter.append('svg:feComponentTransfer')
-  .attr('type', 'linear')
-  .attr('slope', 0.2)
-  .attr('result', 'shadow-opacity');
-dropShadowFilter.append('svg:feBlend')
-  .attr('in', 'SourceGraphic')
-  .attr('in2', 'the-shadow')
-  .attr('mode', 'normal');
-
-
 var link = g.selectAll(".link")
             .data(graph.links)
             .enter().append("line")
@@ -242,6 +201,39 @@ node.on("dblclick.zoom", function(d) { d3.event.stopPropagation();
 
 });
 
+
+
+// Drop-shadow Filter
+var svg = d3.select("svg");
+var defs = svg.append("defs");
+var dropShadowFilter = defs.append('svg:filter')
+  .attr('id', 'drop-shadow')
+  .attr('filterUnits', "userSpaceOnUse")
+  .attr('width', '250%')
+  .attr('height', '250%');
+dropShadowFilter.append('svg:feGaussianBlur')
+  .attr('in', 'SourceGraphic')
+  .attr('stdDeviation', stdDeviation_medium)
+  .attr('result', 'blur-out');
+dropShadowFilter.append('svg:feColorMatrix')
+  .attr('in', 'blur-out')
+  .attr('type', 'hueRotate')
+  .attr('values', 0)
+  .attr('result', 'color-out');
+dropShadowFilter.append('svg:feOffset')
+  .attr('in', 'color-out')
+  .attr('dx', 0)
+  .attr('dy', 0)
+  .attr('result', 'the-shadow');
+dropShadowFilter.append('svg:feComponentTransfer')
+  .attr('type', 'linear')
+  .attr('slope', 0.2)
+  .attr('result', 'shadow-opacity');
+dropShadowFilter.append('svg:feBlend')
+  .attr('in', 'SourceGraphic')
+  .attr('in2', 'the-shadow')
+  .attr('mode', 'normal');
+
 // var circle = node.append("path")
 //   .attr("d", d3.svg.symbol()
 //     .size(function(d) { return d.size * 50; })
@@ -250,6 +242,7 @@ node.on("dblclick.zoom", function(d) { d3.event.stopPropagation();
 //   .style(tocolor, function(d) {
 //     return color(d.color);});
 //.style("filter", "url(#drop-shadow)");
+
 
 var text = g.selectAll(".text")
   .data(graph.nodes)
@@ -407,3 +400,5 @@ window.addEventListener("keydown", function (event) {
 lasso.items(d3.selectAll(".node"));
 g.call(lasso);
 // ========== JtD Lasso Ends ==========
+
+
