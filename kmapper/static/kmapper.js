@@ -6,6 +6,8 @@ var height = document.getElementById("canvas").offsetHeight;
 var w = width;
 var h = height;
 
+var padding = 40;
+
 var focus_node = null, highlight_node = null;
 var text_center = false;
 var outline = false;
@@ -14,7 +16,6 @@ var outline = false;
 var size = d3.scale.pow().exponent(1)
            .domain([1,100])
            .range([8,24]);
-
 
 // Variety of variable inits
 var highlight_color = "blue";
@@ -161,8 +162,88 @@ function lasso_end() {
 // ========== JtD Lasso Ends ==========
 
 svg.style("cursor","move");
+var g = svg.append("g");
+
+/**
+ * Side panes
+ * 
+ * 
+ * 
+ * 
+ */
+
+// Show/Hide Functionality
+var toggle_pane = function(content, content_id, tag){
+  var active = content.active ? false : true;
+
+  if (active){
+    content_id.style("display", "unset");
+    tag.textContent = "[-]";
+  } else{
+    content_id.style("display", "none");
+    tag.textContent = "[+]";
+  }
+
+  // TODO: This is probably not the best way to find the correct height.
+  var h = canvas_height - content.offsetTop - padding;
+  content_id.style("height", h + "px")
+
+  content.active = active;
+}
+
+d3.select("#tooltip_control").on("click", function() {
+  toggle_pane(tooltip_content, 
+              d3.select("#tooltip_content"), 
+              d3.select("#tooltip_tag")[0][0]);
+
+});
+
+d3.select("#meta_control").on("click", function() {
+  toggle_pane(meta_content, 
+              d3.select("#meta_content"),
+              d3.select("#meta_tag")[0][0])
+
+});
+
+d3.select("#help_control").on("click", function() {
+  toggle_pane(helptip_content, 
+              d3.select("#helptip_content"),
+              d3.select("#helptip_tag")[0][0])
+});
+
+
+
+/**
+ * 
+ * Set up color scale
+ * 
+ * 
+ */
+
+var colorscale = JSON.parse(document.getElementById("json_colorscale").dataset.colorscale);
+var domain = colorscale.map((x)=>x[0])
+var palette = colorscale.map((x)=>x[1])
+
+var color = d3.scale.linear()
+  .domain(domain)
+  .range(palette);
+
+
+/**
+ *  Graph setup 
+ * 
+ * 
+ */
 
 var graph = JSON.parse(document.getElementById("json_graph").dataset.graph);
+
+              
+// Force settings
+var force = d3.layout.force()
+            .linkDistance(5)
+            .gravity(0.2)
+            .charge(-1200)
+            .size([w,h]);
 
 force
   .nodes(graph.nodes)
@@ -175,9 +256,7 @@ var link = g.selectAll(".link")
               .attr("class", "link")
               .style("stroke-width", function(d) { return d.w * nominal_stroke; })
               .style("stroke-width", function(d) { return d.w * nominal_stroke; })
-              //.style("stroke", function(d) {
-              //  if (isNumber(d.score) && d.score>=0) return color(d.score);
-              //  else return default_link_color; })
+
 
 var node = g.selectAll(".node")
             .data(graph.nodes)
@@ -192,6 +271,7 @@ var node = g.selectAll(".node")
                   return color(d.color);});
 
 
+// Double clicking on a node will center on it.
 node.on("dblclick.zoom", function(d) { d3.event.stopPropagation();
   var dcx = (window.innerWidth/2-d.x*zoom.scale());
   var dcy = (window.innerHeight/2-d.y*zoom.scale());
@@ -201,7 +281,12 @@ node.on("dblclick.zoom", function(d) { d3.event.stopPropagation();
 
 });
 
-
+var tocolor = "fill";
+var towhite = "stroke";
+if (outline) {
+  tocolor = "stroke";
+  towhite = "fill";
+}
 
 // Drop-shadow Filter
 var svg = d3.select("svg");
@@ -244,6 +329,7 @@ dropShadowFilter.append('svg:feBlend')
 //.style("filter", "url(#drop-shadow)");
 
 
+// Format all text 
 var text = g.selectAll(".text")
   .data(graph.nodes)
   .enter().append("text")
@@ -253,6 +339,8 @@ var text = g.selectAll(".text")
     .style("color", "#2C3E50")
     .style("font-size", nominal_text_size + "px");
 
+
+
 if (text_center) {
   text.text(function(d) { return d.id; })
     .style("text-anchor", "middle");
@@ -261,12 +349,21 @@ if (text_center) {
     .text(function(d) { return '\u2002'+d.id; });
 }
 
-// Mouse events
+
+/**
+ * Mouse Interactivity
+ * 
+ * 
+ * 
+ * 
+ * 
+ */
+
 node.on("mouseover", function(d) {
+  // Change node details
   set_highlight(d);
 
   d3.select("#tooltip").style("display", "block");
-  d3.select("#tooltip_content").html(d.tooltip + "<br/>");
   }).on("mousedown", function(d) {
     // d3.event.stopPropagation(); // Removed to allow zooming
     focus_node = d;
@@ -275,11 +372,22 @@ node.on("mouseover", function(d) {
     exit_highlight();
   });
 
-  d3.select(window).on("mouseup", function() {
-    if (focus_node!==null){
-      focus_node = null;
-    }
-    if (highlight_node === null) exit_highlight();
+  d3.event.stopPropagation();
+  focus_node = d;
+  if (highlight_node === null) {
+    set_highlight(d)
+  }
+}).on("mouseout", function(d) {
+  exit_highlight();
+});
+
+d3.select(window).on("mouseup", function() {
+  if (focus_node!==null){
+    focus_node = null;
+  }
+  if (highlight_node === null) {
+    exit_highlight();
+  }
 });
 
 // Node highlighting logic
@@ -296,25 +404,6 @@ function set_highlight(d){
 }
 // Zoom logic
 zoom.on("zoom", function() {
-  // Only pan on right-click!
-  //console.log('Zoom button: '+d3.event.sourceEvent.button+', buttons: '+d3.event.sourceEvent.buttons)
-  if(d3.event.sourceEvent.type === 'wheel' || (!d3.event.sourceEvent.buttons && d3.event.sourceEvent.button != 0) || (d3.event.sourceEvent.buttons == 2)){
-    var stroke = nominal_stroke;
-    var base_radius = nominal_base_node_size;
-    if (nominal_base_node_size*zoom.scale()>max_base_node_size) {
-      base_radius = max_base_node_size/zoom.scale();}
-    node.attr("d", d3.svg.symbol() // Formerly circle
-      .size(function(d) { return d.size * default_node_size; })
-      .type(function(d) { return d.type; }))
-    if (!text_center) text.attr("dx", function(d) {
-      return (size(d.size)*base_radius/nominal_base_node_size||base_radius); });
-
-    var text_size = nominal_text_size;
-    if (nominal_text_size*zoom.scale()>max_text_size) {
-      text_size = max_text_size/zoom.scale(); }
-    text.style("font-size",text_size + "px");
-    g.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
-  }
 });
 
 svg.call(zoom);
@@ -333,6 +422,8 @@ force.on("tick", function() {
     .attr("cy", function(d) { return d.y; });
 });
 
+
+
 // Resizing window and redraws
 function resize() {
   var width = window.innerWidth, height = window.innerHeight;
@@ -341,9 +432,10 @@ function resize() {
   var height = document.getElementById("canvas").offsetHeight;
   force.size([force.size()[0]+(width-w)/zoom.scale(),
               force.size()[1]+(height-h)/zoom.scale()]).resume();
-    w = width;
-    h = height;
+  w = width;
+  h = height;
 }
+
 
 function isNumber(n) {
   return !isNaN(parseFloat(n)) && isFinite(n);

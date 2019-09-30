@@ -8,9 +8,7 @@
 
 > Nature uses as little as possible of anything. - Johannes Kepler
 
-This is a Python implementation of the TDA Mapper algorithm  for visualization of high-dimensional data. For complete documentation, see [https://MLWave.github.io/kepler-mapper](https://MLWave.github.io/kepler-mapper).
-
-
+This is a Python implementation of the TDA Mapper algorithm  for visualization of high-dimensional data. For complete documentation, see [https://kepler-mapper.scikit-tda.org](https://kepler-mapper.scikit-tda.org).
 
 KeplerMapper employs approaches based on the Mapper algorithm (Singh et al.) as first described in the paper "Topological Methods for the Analysis of High Dimensional Data Sets and 3D Object Recognition".
 
@@ -27,14 +25,16 @@ KeplerMapper requires:
   - NumPy
   - Scikit-learn
 
-Running some of the examples requires:
+Using the plotly visualizations requires a few extra libraries:
+
+  - Python-Igraph
+  - Plotly 
+  - Ipywidgets
+
+Additionally, running some of the examples requires:
 
   - matplotlib
-
-Visualizations load external resources:
-
-  - Roboto Webfont (Google)
-  - D3.js (Mike Bostock)
+  - umap-learn
 
 
 ### Installation
@@ -86,3 +86,4 @@ Standard MIT disclaimer applies, see `DISCLAIMER.md` for full text. Development 
 ## Cite
 
 Nathaniel Saul, & Hendrik Jacob van Veen. (2017, November 17). MLWave/kepler-mapper: 186f (Version 1.0.1). Zenodo. http://doi.org/10.5281/zenodo.1054444
+
