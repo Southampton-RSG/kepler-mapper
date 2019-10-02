@@ -5,7 +5,6 @@ var width = document.getElementById("canvas").offsetWidth;
 var height = document.getElementById("canvas").offsetHeight;
 var w = width;
 var h = height;
-
 var padding = 40;
 
 var focus_node = null, highlight_node = null;
@@ -53,6 +52,7 @@ if (outline) {
   towhite = "fill";
 }
 
+
 // We draw the graph in SVG
 var svg = d3.select("#canvas").append("svg")
           .attr("width", width)
@@ -61,39 +61,13 @@ var svg = d3.select("#canvas").append("svg")
             d3.event.preventDefault(); // Block right-clicks
            });
 
-// Show/Hide Functionality
-d3.select("#tooltip_control").on("click", function() {
-  d3.select("#tooltip").style("display", "none");
-});
-d3.select("#meta_control").on("click", function() {
-  d3.select("#meta").style("display", "none");
-});
-
-// Color settings: Ordinal Scale of ["0"-"30"] hot-to-cold
-var color = d3.scale.ordinal()
-            .domain(["0","1", "2", "3", "4", "5", "6", "7", "8", "9", "10",
-                     "11", "12", "13","14","15","16","17","18","19","20",
-                     "21","22","23","24","25","26","27","28","29","30"])
-            .range(["#FF0000","#FF1400","#FF2800","#FF3c00","#FF5000","#FF6400",
-                    "#FF7800","#FF8c00","#FFa000","#FFb400","#FFc800","#FFdc00",
-                    "#FFf000","#fdff00","#b0ff00","#65ff00","#17ff00","#00ff36",
-                    "#00ff83","#00ffd0","#00e4ff","#00c4ff","#00a4ff","#00a4ff",
-                    "#0084ff","#0064ff","#0044ff","#0022ff","#0002ff","#0100ff",
-                    "#0300ff","#0500ff"]);
-
-// Force settings
-var force = d3.layout.force()
-            .linkDistance(linkDistance_medium)
-            .gravity(gravity_high)
-            .charge(charge_high)
-            .size([w, h]);
-
-// Set variable to disable the keypress catching code when we're trying to type a filename
-var lasso_active = false;
-
+svg.style("cursor","move");
 var g = svg.append("g");
 
 // ========== JtD Lasso starts ==========
+// Set variable to disable the keypress catching code when we're trying to type a filename
+var lasso_active = false;
+
 // Create the area where the lasso event can be triggered
 var lasso_area = g.append("rect")
         .attr("width", w)
@@ -161,8 +135,7 @@ function lasso_end() {
 }
 // ========== JtD Lasso Ends ==========
 
-svg.style("cursor","move");
-var g = svg.append("g");
+
 
 /**
  * Side panes
@@ -262,31 +235,26 @@ var node = g.selectAll(".node")
             .data(graph.nodes)
             .enter().append("g")
               .attr("class", "node")
-              .call(force.drag).append("path") // This section copied from 'circle' later on
+              .call(force.drag);
+/*
                 .attr("d", d3.svg.symbol()
                   .size(function(d) { return d.size * default_node_size; })
                   .type(function(d) { return d.type; }))
                 .attr("class", "circle")
                 .style(tocolor, function(d) {
                   return color(d.color);});
-
+*/
 
 // Double clicking on a node will center on it.
 node.on("dblclick.zoom", function(d) { d3.event.stopPropagation();
   var dcx = (window.innerWidth/2-d.x*zoom.scale());
   var dcy = (window.innerHeight/2-d.y*zoom.scale());
   zoom.translate([dcx,dcy]);
-  // g.attr("transform", "translate("+ dcx + "," + dcy  + ")scale(" + zoom.scale() + ")");
   g.attr("transform", "translate("+ dcx + "," + dcy  + ")scale(" + zoom.scale() + ")");
-
 });
 
-var tocolor = "fill";
-var towhite = "stroke";
-if (outline) {
-  tocolor = "stroke";
-  towhite = "fill";
-}
+
+
 
 // Drop-shadow Filter
 var svg = d3.select("svg");
@@ -319,13 +287,17 @@ dropShadowFilter.append('svg:feBlend')
   .attr('in2', 'the-shadow')
   .attr('mode', 'normal');
 
-// var circle = node.append("path")
-//   .attr("d", d3.svg.symbol()
-//     .size(function(d) { return d.size * 50; })
-//     .type(function(d) { return d.type; }))
-//   .attr("class", "circle")
-//   .style(tocolor, function(d) {
-//     return color(d.color);});
+// Draw circles
+var circle = node.append("path")
+  .attr("d", d3.svg.symbol()
+    .size(function(d) { return d.size * default_node_size; })
+    .type(function(d) { return d.type; }))
+  .attr("class", "circle")
+  .style(tocolor, function(d) {
+    console.log("Node color:", d.color);
+    console.log("becomes color ", color(d.color));
+    return color(d.color);
+  });
 //.style("filter", "url(#drop-shadow)");
 
 
@@ -358,19 +330,13 @@ if (text_center) {
  * 
  * 
  */
-
+/*
 node.on("mouseover", function(d) {
   // Change node details
   set_highlight(d);
-
-  d3.select("#tooltip").style("display", "block");
-  }).on("mousedown", function(d) {
-    // d3.event.stopPropagation(); // Removed to allow zooming
-    focus_node = d;
-    if (highlight_node === null) set_highlight(d)
-  }).on("mouseout", function(d) {
-    exit_highlight();
-  });
+  d3.select("#tooltip_content").html(d.tooltip + "<br/>");
+}).on("mousedown", function(d) {
+  // TODO: This seems to only stop the one particular node from moving?
 
   d3.event.stopPropagation();
   focus_node = d;
@@ -380,6 +346,20 @@ node.on("mouseover", function(d) {
 }).on("mouseout", function(d) {
   exit_highlight();
 });
+*/
+
+node.on("mouseover", function(d) {
+  set_highlight(d);
+
+  d3.select("#tooltip").style("display", "block");
+  d3.select("#tooltip_content").html(d.tooltip + "<br/>");
+  }).on("mousedown", function(d) {
+    // d3.event.stopPropagation(); // Removed to allow zooming
+    focus_node = d;
+    if (highlight_node === null) set_highlight(d)
+  }).on("mouseout", function(d) {
+    exit_highlight();
+  });
 
 d3.select(window).on("mouseup", function() {
   if (focus_node!==null){
@@ -402,9 +382,52 @@ function set_highlight(d){
   svg.style("cursor","pointer");
   if (focus_node!==null) d = focus_node;
 }
+
 // Zoom logic
+/*
 zoom.on("zoom", function() {
+  var stroke = nominal_stroke;
+  var base_radius = nominal_base_node_size;
+  if (nominal_base_node_size*zoom.scale()>max_base_node_size) {
+    base_radius = max_base_node_size/zoom.scale();}
+  circle.attr("d", d3.svg.symbol()
+    .size(function(d) { return d.size * 50; })
+    .type(function(d) { return d.type; }))
+  if (!text_center) text.attr("dx", function(d) {
+    return (size(d.size)*base_radius/nominal_base_node_size||base_radius); });
+
+  var text_size = nominal_text_size;
+  if (nominal_text_size*zoom.scale()>max_text_size) {
+    text_size = max_text_size/zoom.scale(); }
+  text.style("font-size",text_size + "px");
+
+  g.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
 });
+*/
+
+zoom.on("zoom", function() {
+  // Only pan on right-click!
+  //console.log('Zoom button: '+d3.event.sourceEvent.button+', buttons: '+d3.event.sourceEvent.buttons)
+  if(d3.event.sourceEvent.type === 'wheel' || (!d3.event.sourceEvent.buttons && d3.event.sourceEvent.button != 0) || (d3.event.sourceEvent.buttons == 2)){
+
+    var stroke = nominal_stroke;
+    var base_radius = nominal_base_node_size;
+    if (nominal_base_node_size*zoom.scale()>max_base_node_size) {
+      base_radius = max_base_node_size/zoom.scale();}
+    circle.attr("d", d3.svg.symbol() // Formerly circle
+      .size(function(d) { return d.size * default_node_size; })
+      .type(function(d) { return d.type; }))
+    if (!text_center) text.attr("dx", function(d) {
+      return (size(d.size)*base_radius/nominal_base_node_size||base_radius); });
+
+    var text_size = nominal_text_size;
+    if (nominal_text_size*zoom.scale()>max_text_size) {
+      text_size = max_text_size/zoom.scale(); }
+    text.style("font-size",text_size + "px");
+    g.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
+  }
+});
+
 
 svg.call(zoom);
 resize();
@@ -427,9 +450,10 @@ force.on("tick", function() {
 // Resizing window and redraws
 function resize() {
   var width = window.innerWidth, height = window.innerHeight;
-  svg.attr("width", width).attr("height", height);
   var width = document.getElementById("canvas").offsetWidth;
   var height = document.getElementById("canvas").offsetHeight;
+  svg.attr("width", width).attr("height", height);
+
   force.size([force.size()[0]+(width-w)/zoom.scale(),
               force.size()[1]+(height-h)/zoom.scale()]).resume();
   w = width;
@@ -444,48 +468,52 @@ function isNumber(n) {
 // Key press events
 window.addEventListener("keydown", function (event) {
   if (event.defaultPrevented || lasso_active) {
-    return; // Do nothing if the event was already processed or we're trying to lasso something and
-    // the user is typing the name out
-  }
+      return; // Do nothing if the event was already processed or we're trying to lasso something and
+      // the user is typing the name out
+    }
   switch (event.key) {
-    case "s":
-      // Do something for "s" key press.
-      node.style("filter", "url(#drop-shadow)");
-      break;
-    case "c":
-      // Do something for "s" key press.
-      node.style("filter", null);
-      break;
-    case "p":
-      // Do something for "p" key press.
-      d3.select("body").attr('id', null).attr('id', "print")
-      break;
-    case "d":
-      // Do something for "d" key press.
-      d3.select("body").attr('id', null).attr('id', "display")
-      break;
-    case "z":
-      force.gravity(gravity_off)
-           .charge(charge_off);
-      resize();
-      break
-    case "m":
-      force.gravity(gravity_low)
-           .charge(charge_low);
-      resize();
-      break
-    case "e":
-      force.gravity(gravity_medium)
-           .charge(charge_medium);
+  case "f":
+    console.log("Freeze graph")
+    break;
+  case "s":
+    // Do something for "s" key press.
+    node.style("filter", "url(#drop-shadow)");
+    break;
+  case "c":
+    // Do something for "s" key press.
+    node.style("filter", null);
+    break;
+  case "p":
+    // Turn to print mode, white backgrounds
+    d3.select("body").attr('id', null).attr('id', "print")
+    break;
+  case "d":
+    // Do something for "d" key press.
+    d3.select("body").attr('id', null).attr('id', "display")
+    break;
+  case "z":
+    force.gravity(gravity_off)
+         .charge(charge_off);
+    resize();
+    break
+  case "m":
+    force.gravity(gravity_low)
+         .charge(charge_low);
+    resize();
+    break
+  case "e":
+    force.gravity(gravity_medium)
+         .charge(charge_medium);
 
-      resize();
-      break;
-    default:
-      return; // Quit when this doesn't handle the key event.
+    resize();
+   break
+  default:
+    return; // Quit when this doesn't handle the key event.
   }
   // Cancel the default action to avoid it being handled twice
   event.preventDefault();
 }, true);
+
 
 // ========== JtD Lasso Starts ==========
 // Call the lasso
