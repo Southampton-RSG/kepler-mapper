@@ -55,3 +55,6 @@ setup.cfg
 dist
 *.pyc
 .idea/*
+.pytest_cache
+.vscode
+.ipynb_checkpoints

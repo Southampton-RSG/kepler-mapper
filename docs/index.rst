@@ -11,7 +11,8 @@ KeplerMapper
 
     Nature uses as little as possible of anything. - Johannes Kepler
 
-This is a library implementing the Mapper algorithm in Python. KeplerMapper can be used for visualization of high-dimensional data and 3D point cloud data. KeplerMapper can make use of Scikit-Learn API compatible cluster and scaling algorithms.
+This is a library implementing the Mapper algorithm in Python. KeplerMapper can be used for visualization of high-dimensional data and 3D point cloud data. KeplerMapper can make use of Scikit-Learn API compatible cluster and scaling algorithms. You can find the source code on github at 
+`MLWave/kepler-mapper <https://github.com/MLWave/kepler-mapper>`_.
 
 KeplerMapper employs approaches based on the MAPPER algorithm (Singh et al.) as first described in the paper "Topological Methods for the Analysis of High Dimensional Data Sets and 3D Object Recognition".
 
@@ -19,14 +20,30 @@ Contents
 --------
 
 .. toctree::
-  :maxdepth: 2
+  :maxdepth: 1
 
-  Introduction <index>
   about
   setup
   usage
   examples
   reference
+
+.. toctree::
+    :maxdepth: 1
+    :caption: Tutorials
+
+    Adapters
+    Plotly Demo
+    KeplerMapper usage in Jupyter Notebook
+
+.. toctree::
+    :maxdepth: 1
+    :caption: Advanced Tutorials
+
+    KeplerMapper Newsgroup20 Pipeline
+    TOR-XGB-TDA
+    Confidence Graphs
+    self-guessing
 
 
 .. |PyPI version| image:: https://badge.fury.io/py/kmapper.svg

@@ -15,6 +15,7 @@ var width = document.getElementById("canvas").offsetWidth;
 var height = document.getElementById("canvas").offsetHeight;
 var w = width;
 var h = height;
+<<<<<<< HEAD
 
 // We draw the graph in SVG
 var svg = d3.select("#canvas").append("svg")
@@ -23,6 +24,15 @@ var svg = d3.select("#canvas").append("svg")
           .on("contextmenu", function (d, i) {
             d3.event.preventDefault(); // Block right-clicks
            });
+||||||| merged common ancestors
+
+// We draw the graph in SVG
+var svg = d3.select("#canvas").append("svg")
+          .attr("width", width)
+          .attr("height", height);
+=======
+var padding = 40;
+>>>>>>> v1.1.6
 
 var focus_node = null, highlight_node = null;
 var text_center = false;
@@ -33,6 +43,7 @@ var size = d3.scale.pow().exponent(1)
            .domain([1,100])
            .range([8,24]);
 
+<<<<<<< HEAD
 // Show/Hide Functionality
 d3.select("#tooltip_control").on("click", function() {
   d3.select("#tooltip").style("display", "none");
@@ -53,6 +64,35 @@ var color = d3.scale.ordinal()
                     "#0084ff","#0064ff","#0044ff","#0022ff","#0002ff","#0100ff",
                     "#0300ff","#0500ff"]);
 
+||||||| merged common ancestors
+// Show/Hide Functionality
+d3.select("#tooltip_control").on("click", function() {
+  d3.select("#tooltip").style("display", "none");
+});
+d3.select("#meta_control").on("click", function() {
+  d3.select("#meta").style("display", "none");
+});
+
+// Color settings: Ordinal Scale of ["0"-"30"] hot-to-cold
+var color = d3.scale.ordinal()
+            .domain(["0","1", "2", "3", "4", "5", "6", "7", "8", "9", "10",
+                     "11", "12", "13","14","15","16","17","18","19","20",
+                     "21","22","23","24","25","26","27","28","29","30"])
+            .range(["#FF0000","#FF1400","#FF2800","#FF3c00","#FF5000","#FF6400",
+                    "#FF7800","#FF8c00","#FFa000","#FFb400","#FFc800","#FFdc00",
+                    "#FFf000","#fdff00","#b0ff00","#65ff00","#17ff00","#00ff36",
+                    "#00ff83","#00ffd0","#00e4ff","#00c4ff","#00a4ff","#00a4ff",
+                    "#0084ff","#0064ff","#0044ff","#0022ff","#0002ff","#0100ff",
+                    "#0300ff","#0500ff"]);
+// Force settings
+var force = d3.layout.force()
+            .linkDistance(5)
+            .gravity(0.2)
+            .charge(-1200)
+            .size([w,h]);
+
+=======
+>>>>>>> v1.1.6
 // Variety of variable inits
 var highlight_color = "blue";
 var highlight_trans = 0.1;
@@ -81,6 +121,7 @@ var max_base_node_size = 36;
 var min_zoom = 0.1;
 var max_zoom = 7;
 var zoom = d3.behavior.zoom().scaleExtent([min_zoom,max_zoom]);
+<<<<<<< HEAD
 
 // Force settings
 var force = d3.layout.force()
@@ -93,6 +134,24 @@ var force = d3.layout.force()
 var lasso_active = false;
 
 var g = svg.append("g");
+||||||| merged common ancestors
+var g = svg.append("g");
+=======
+
+
+var tocolor = "fill";
+var towhite = "stroke";
+if (outline) {
+  tocolor = "stroke";
+  towhite = "fill";
+}
+
+
+// We draw the graph in SVG
+var svg = d3.select("#canvas").append("svg")
+          .attr("width", width)
+          .attr("height", height);
+>>>>>>> v1.1.6
 
 // ========== JtD Lasso starts ==========
 // Create the area where the lasso event can be triggered
@@ -163,13 +222,124 @@ function lasso_end() {
 // ========== JtD Lasso Ends ==========
 
 svg.style("cursor","move");
+var g = svg.append("g");
+
+/**
+ * Side panes
+ * 
+ * 
+ * 
+ * 
+ */
+
+// Show/Hide Functionality
+var toggle_pane = function(content, content_id, tag){
+  var active = content.active ? false : true;
+
+  if (active){
+    content_id.style("display", "unset");
+    tag.textContent = "[-]";
+  } else{
+    content_id.style("display", "none");
+    tag.textContent = "[+]";
+  }
+
+  // TODO: This is probably not the best way to find the correct height.
+  var h = canvas_height - content.offsetTop - padding;
+  content_id.style("height", h + "px")
+
+  content.active = active;
+}
+
+d3.select("#tooltip_control").on("click", function() {
+  toggle_pane(tooltip_content, 
+              d3.select("#tooltip_content"), 
+              d3.select("#tooltip_tag")[0][0]);
+
+});
+
+d3.select("#meta_control").on("click", function() {
+  toggle_pane(meta_content, 
+              d3.select("#meta_content"),
+              d3.select("#meta_tag")[0][0])
+
+});
+
+d3.select("#help_control").on("click", function() {
+  toggle_pane(helptip_content, 
+              d3.select("#helptip_content"),
+              d3.select("#helptip_tag")[0][0])
+});
+
+
+
+/**
+ * 
+ * Set up color scale
+ * 
+ * 
+ */
+
+var colorscale = JSON.parse(document.getElementById("json_colorscale").dataset.colorscale);
+var domain = colorscale.map((x)=>x[0])
+var palette = colorscale.map((x)=>x[1])
+
+var color = d3.scale.linear()
+  .domain(domain)
+  .range(palette);
+
+
+/**
+ *  Graph setup 
+ * 
+ * 
+ */
 
 var graph = JSON.parse(document.getElementById("json_graph").dataset.graph);
+
+              
+// Force settings
+var force = d3.layout.force()
+            .linkDistance(5)
+            .gravity(0.2)
+            .charge(-1200)
+            .size([w,h]);
 
 force
   .nodes(graph.nodes)
   .links(graph.links)
   .start();
+
+<<<<<<< HEAD
+var tocolor = "fill";
+var towhite = "stroke";
+if (outline) {
+  tocolor = "stroke";
+  towhite = "fill";
+}
+||||||| merged common ancestors
+var link = g.selectAll(".link")
+            .data(graph.links)
+            .enter().append("line")
+              .attr("class", "link")
+              .style("stroke-width", function(d) { return d.w * nominal_stroke; })
+              .style("stroke-width", function(d) { return d.w * nominal_stroke; })
+              //.style("stroke", function(d) {
+              //  if (isNumber(d.score) && d.score>=0) return color(d.score);
+              //  else return default_link_color; })
+
+var node = g.selectAll(".node")
+            .data(graph.nodes)
+            .enter().append("g")
+              .attr("class", "node")
+              .call(force.drag);
+
+node.on("dblclick.zoom", function(d) { d3.event.stopPropagation();
+  var dcx = (window.innerWidth/2-d.x*zoom.scale());
+  var dcy = (window.innerHeight/2-d.y*zoom.scale());
+  zoom.translate([dcx,dcy]);
+  g.attr("transform", "translate("+ dcx + "," + dcy  + ")scale(" + zoom.scale() + ")");
+});
 
 var tocolor = "fill";
 var towhite = "stroke";
@@ -177,6 +347,32 @@ if (outline) {
   tocolor = "stroke";
   towhite = "fill";
 }
+=======
+var link = g.selectAll(".link")
+            .data(graph.links)
+            .enter().append("line")
+              .attr("class", "link")
+              .style("stroke-width", function(d) { return d.w * nominal_stroke; })
+              .style("stroke-width", function(d) { return d.w * nominal_stroke; })
+
+
+var node = g.selectAll(".node")
+            .data(graph.nodes)
+            .enter().append("g")
+              .attr("class", "node")
+              .call(force.drag);
+
+// Double clicking on a node will center on it.
+node.on("dblclick.zoom", function(d) { d3.event.stopPropagation();
+  var dcx = (window.innerWidth/2-d.x*zoom.scale());
+  var dcy = (window.innerHeight/2-d.y*zoom.scale());
+  zoom.translate([dcx,dcy]);
+  g.attr("transform", "translate("+ dcx + "," + dcy  + ")scale(" + zoom.scale() + ")");
+});
+
+
+
+>>>>>>> v1.1.6
 
 // Drop-shadow Filter
 var svg = d3.select("svg");
@@ -209,6 +405,7 @@ dropShadowFilter.append('svg:feBlend')
   .attr('in2', 'the-shadow')
   .attr('mode', 'normal');
 
+<<<<<<< HEAD
 
 var link = g.selectAll(".link")
             .data(graph.links)
@@ -249,8 +446,31 @@ node.on("dblclick.zoom", function(d) { d3.event.stopPropagation();
 //   .attr("class", "circle")
 //   .style(tocolor, function(d) {
 //     return color(d.color);});
+||||||| merged common ancestors
+var circle = node.append("path")
+  .attr("d", d3.svg.symbol()
+    .size(function(d) { return d.size * 50; })
+    .type(function(d) { return d.type; }))
+  .attr("class", "circle")
+  .style(tocolor, function(d) {
+    return color(d.color);});
+=======
+// Draw circles
+var circle = node.append("path")
+  .attr("d", d3.svg.symbol()
+    .size(function(d) { return d.size * 50; })
+    .type(function(d) { return d.type; }))
+  .attr("class", "circle")
+  .style(tocolor, function(d) {
+    console.log("Node color:", d.color);
+    console.log("becomes color ", color(d.color));
+    return color(d.color);
+  });
+>>>>>>> v1.1.6
 //.style("filter", "url(#drop-shadow)");
 
+
+// Format all text 
 var text = g.selectAll(".text")
   .data(graph.nodes)
   .enter().append("text")
@@ -260,6 +480,8 @@ var text = g.selectAll(".text")
     .style("color", "#2C3E50")
     .style("font-size", nominal_text_size + "px");
 
+
+
 if (text_center) {
   text.text(function(d) { return d.id; })
     .style("text-anchor", "middle");
@@ -268,12 +490,30 @@ if (text_center) {
     .text(function(d) { return '\u2002'+d.id; });
 }
 
-// Mouse events
+
+/**
+ * Mouse Interactivity
+ * 
+ * 
+ * 
+ * 
+ * 
+ */
+
 node.on("mouseover", function(d) {
+  // Change node details
   set_highlight(d);
+<<<<<<< HEAD
 
   d3.select("#tooltip").style("display", "block");
+||||||| merged common ancestors
+  console.log("node hober");
+
+  d3.select("#tooltip").style("display", "block");
+=======
+>>>>>>> v1.1.6
   d3.select("#tooltip_content").html(d.tooltip + "<br/>");
+<<<<<<< HEAD
   }).on("mousedown", function(d) {
     // d3.event.stopPropagation(); // Removed to allow zooming
     focus_node = d;
@@ -281,12 +521,36 @@ node.on("mouseover", function(d) {
   }).on("mouseout", function(d) {
     exit_highlight();
   });
+||||||| merged common ancestors
+  }).on("mousedown", function(d) {
+    d3.event.stopPropagation();
+    focus_node = d;
+    if (highlight_node === null) set_highlight(d)
+  }).on("mouseout", function(d) {
+    console.log("mouseout");
+    exit_highlight();
+  });
+=======
+}).on("mousedown", function(d) {
+  // TODO: This seems to only stop the one particular node from moving?
+>>>>>>> v1.1.6
 
-  d3.select(window).on("mouseup", function() {
-    if (focus_node!==null){
-      focus_node = null;
-    }
-    if (highlight_node === null) exit_highlight();
+  d3.event.stopPropagation();
+  focus_node = d;
+  if (highlight_node === null) {
+    set_highlight(d)
+  }
+}).on("mouseout", function(d) {
+  exit_highlight();
+});
+
+d3.select(window).on("mouseup", function() {
+  if (focus_node!==null){
+    focus_node = null;
+  }
+  if (highlight_node === null) {
+    exit_highlight();
+  }
 });
 
 // Node highlighting logic
@@ -301,8 +565,16 @@ function set_highlight(d){
   svg.style("cursor","pointer");
   if (focus_node!==null) d = focus_node;
 }
+<<<<<<< HEAD
+||||||| merged common ancestors
+
+=======
+
+
+>>>>>>> v1.1.6
 // Zoom logic
 zoom.on("zoom", function() {
+<<<<<<< HEAD
   // Only pan on right-click!
   //console.log('Zoom button: '+d3.event.sourceEvent.button+', buttons: '+d3.event.sourceEvent.buttons)
   if(d3.event.sourceEvent.type === 'wheel' || (!d3.event.sourceEvent.buttons && d3.event.sourceEvent.button != 0) || (d3.event.sourceEvent.buttons == 2)){
@@ -322,6 +594,41 @@ zoom.on("zoom", function() {
     text.style("font-size",text_size + "px");
     g.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
   }
+||||||| merged common ancestors
+var stroke = nominal_stroke;
+var base_radius = nominal_base_node_size;
+if (nominal_base_node_size*zoom.scale()>max_base_node_size) {
+  base_radius = max_base_node_size/zoom.scale();}
+circle.attr("d", d3.svg.symbol()
+  .size(function(d) { return d.size * 50; })
+  .type(function(d) { return d.type; }))
+if (!text_center) text.attr("dx", function(d) {
+  return (size(d.size)*base_radius/nominal_base_node_size||base_radius); });
+
+var text_size = nominal_text_size;
+if (nominal_text_size*zoom.scale()>max_text_size) {
+  text_size = max_text_size/zoom.scale(); }
+text.style("font-size",text_size + "px");
+
+g.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
+=======
+  var stroke = nominal_stroke;
+  var base_radius = nominal_base_node_size;
+  if (nominal_base_node_size*zoom.scale()>max_base_node_size) {
+    base_radius = max_base_node_size/zoom.scale();}
+  circle.attr("d", d3.svg.symbol()
+    .size(function(d) { return d.size * 50; })
+    .type(function(d) { return d.type; }))
+  if (!text_center) text.attr("dx", function(d) {
+    return (size(d.size)*base_radius/nominal_base_node_size||base_radius); });
+
+  var text_size = nominal_text_size;
+  if (nominal_text_size*zoom.scale()>max_text_size) {
+    text_size = max_text_size/zoom.scale(); }
+  text.style("font-size",text_size + "px");
+
+  g.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
+>>>>>>> v1.1.6
 });
 
 svg.call(zoom);
@@ -340,6 +647,8 @@ force.on("tick", function() {
     .attr("cy", function(d) { return d.y; });
 });
 
+
+
 // Resizing window and redraws
 function resize() {
   var width = window.innerWidth, height = window.innerHeight;
@@ -348,9 +657,10 @@ function resize() {
   var height = document.getElementById("canvas").offsetHeight;
   force.size([force.size()[0]+(width-w)/zoom.scale(),
               force.size()[1]+(height-h)/zoom.scale()]).resume();
-    w = width;
-    h = height;
+  w = width;
+  h = height;
 }
+
 
 function isNumber(n) {
   return !isNaN(parseFloat(n)) && isFinite(n);
@@ -358,6 +668,7 @@ function isNumber(n) {
 
 // Key press events
 window.addEventListener("keydown", function (event) {
+<<<<<<< HEAD
   if (event.defaultPrevented || lasso_active) {
     return; // Do nothing if the event was already processed or we're trying to lasso something and
     // the user is typing the name out
@@ -400,6 +711,96 @@ window.addEventListener("keydown", function (event) {
   }
   // Cancel the default action to avoid it being handled twice
   event.preventDefault();
+||||||| merged common ancestors
+if (event.defaultPrevented) {
+  return; // Do nothing if the event was already processed
+}
+switch (event.key) {
+  case "s":
+    // Do something for "s" key press.
+    node.style("filter", "url(#drop-shadow)");
+    break;
+  case "c":
+    // Do something for "s" key press.
+    node.style("filter", null);
+    break;
+  case "p":
+    // Do something for "p" key press.
+    d3.select("body").attr('id', null).attr('id', "print")
+    break;
+  case "d":
+    // Do something for "d" key press.
+    d3.select("body").attr('id', null).attr('id', "display")
+    break;
+  case "z":
+    force.gravity(0.0)
+         .charge(0.0);
+    resize();
+    break
+  case "m":
+    force.gravity(0.07)
+         .charge(-1);
+    resize();
+    break
+  case "e":
+    force.gravity(0.4)
+         .charge(-600);
+
+    resize();
+    break
+  default:
+    return; // Quit when this doesn't handle the key event.
+}
+// Cancel the default action to avoid it being handled twice
+event.preventDefault();
+=======
+if (event.defaultPrevented) {
+  return; // Do nothing if the event was already processed
+}
+
+
+switch (event.key) {
+  case "f":
+    console.log("Freeze graph")
+    break;
+  case "s":
+    // Do something for "s" key press.
+    node.style("filter", "url(#drop-shadow)");
+    break;
+  case "c":
+    // Do something for "s" key press.
+    node.style("filter", null);
+    break;
+  case "p":
+    // Turn to print mode, white backgrounds
+    d3.select("body").attr('id', null).attr('id', "print")
+    break;
+  case "d":
+    // Do something for "d" key press.
+    d3.select("body").attr('id', null).attr('id', "display")
+    break;
+  case "z":
+    force.gravity(0.0)
+         .charge(0.0);
+    resize();
+    break
+  case "m":
+    force.gravity(0.07)
+         .charge(-1);
+    resize();
+    break
+  case "e":
+    force.gravity(0.4)
+         .charge(-600);
+
+    resize();
+    break
+  default:
+    return; // Quit when this doesn't handle the key event.
+}
+// Cancel the default action to avoid it being handled twice
+event.preventDefault();
+>>>>>>> v1.1.6
 }, true);
 
 // ========== JtD Lasso Starts ==========
