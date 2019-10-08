@@ -22,6 +22,7 @@ var highlight_trans = 0.1;
 var default_node_color = "#ccc";
 var default_node_color = "rgba(160,160,160, 0.5)";
 
+// JtD ------
 var default_node_size = 5;  // 50 originally; km-gui
 var charge_off = 0;  // 0 originally; km-gui
 var charge_low = -1;  // -1 originally; km-gui
@@ -33,6 +34,7 @@ var gravity_medium = 0.2;  // 0.2 originally; km-gui
 var gravity_high = 0.4;  // 0.4 originally; km-gui
 var linkDistance_medium = 0.5;  // 5.0 originally; km-gui
 var stdDeviation_medium = 1.2;  // 12.0 originally; km-gui
+// End JtD --
 
 var default_link_color = "rgba(160,160,160, 0.5)";
 var nominal_base_node_size = 8;
@@ -58,7 +60,7 @@ var svg = d3.select("#canvas").append("svg")
           .attr("width", width)
           .attr("height", height)
           .on("contextmenu", function (d, i) {
-            d3.event.preventDefault(); // Block right-clicks
+            d3.event.preventDefault(); // JtD: Block right-clicks
            });
 
 svg.style("cursor","move");
@@ -238,9 +240,9 @@ var graph = JSON.parse(document.getElementById("json_graph").dataset.graph);
               
 // Force settings
 var force = d3.layout.force()
-            .linkDistance(5)
-            .gravity(0.2)
-            .charge(-1200)
+            .linkDistance(linkDistance_medium)
+            .gravity(gravity_high)
+            .charge(charge_high)
             .size([w,h]);
 
 force
